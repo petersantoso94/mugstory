@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'ad_helper.dart';
+import 'component/story_item.dart';
 import 'controller/story_controller.dart';
 import 'model/story.dart';
 
@@ -125,17 +126,7 @@ class _StoryPageState extends State<StoryPage> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final data = snapshot.requireData;
-                    return Expanded(
-                      flex: 12,
-                      child: Center(
-                        child: Text(
-                          data.docs[0].data().content,
-                          style: TextStyle(
-                            fontSize: 25.0,
-                          ),
-                        ),
-                      ),
-                    );
+                    return StoryItem(data.docs[0].data());
                   }),
             ],
           ),
