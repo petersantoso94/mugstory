@@ -64,13 +64,14 @@ class _StoryPageState extends State<StoryPage> {
           fromFirestore: (snapshots, _) => Story.fromJson(snapshots.data()!),
           toFirestore: (story, _) => story.toJson());
   late Stream<QuerySnapshot<Story>> _stories;
+  int chosenId = -1;
 
   @override
   void initState() {
     _bannerAd = BannerAd(
       adUnitId: AdHelper.bannerAdUnitId,
       request: AdRequest(),
-      size: AdSize.banner,
+      size: AdSize.fullBanner,
       listener: AdListener(
         onAdLoaded: (_) {
           setState(() {
@@ -109,7 +110,6 @@ class _StoryPageState extends State<StoryPage> {
                 Align(
                   alignment: Alignment.topCenter,
                   child: Container(
-                    width: _bannerAd.size.width.toDouble(),
                     height: _bannerAd.size.height.toDouble(),
                     child: AdWidget(ad: _bannerAd),
                   ),
@@ -126,7 +126,24 @@ class _StoryPageState extends State<StoryPage> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final data = snapshot.requireData;
-                    return StoryItem(data.docs[0].data());
+                    if (chosenId > -1) {
+                      return StoryItem(data.docs[chosenId]);
+                    }
+                    return ListView.builder(
+                      scrollDirection: Axis.vertical,
+                      shrinkWrap: true,
+                      itemCount: data.size,
+                      itemBuilder: (ctx, i) {
+                        var currData = data.docs[i].data();
+                        return TextButton(
+                            onPressed: () {
+                              setState(() {
+                                chosenId = i;
+                              });
+                            },
+                            child: Text(currData.title));
+                      },
+                    );
                   }),
             ],
           ),

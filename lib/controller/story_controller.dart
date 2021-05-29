@@ -1,8 +1,8 @@
 class StoryController {
-  int _storyNumber = 0;
+  int _storyNumber = 1;
 
   void restart() {
-    _storyNumber = 0;
+    _storyNumber = 1;
   }
 
   void nextStory(int choiceNumber) {
