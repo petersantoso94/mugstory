@@ -18,7 +18,7 @@ class Choice {
           content: json['content']! as String,
           caption: json['caption']! as String,
           level: json['level']! as int,
-          parents: json['parents'] as List<String>?,
+          parents: (json['parents'] as List?)?.cast<String>(),
         );
 
   Map<String, Object?> toJson() {

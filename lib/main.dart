@@ -6,7 +6,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'ad_helper.dart';
 import 'component/story_item.dart';
-import 'controller/story_controller.dart';
+import 'constants.dart';
+import 'model/choice.dart';
 import 'model/story.dart';
 
 Future<InitializationStatus> _initGoogleMobileAds() {
@@ -21,8 +22,6 @@ Future<void> main() async {
   await _initGoogleMobileAds();
   runApp(Mugstory());
 }
-
-var storyBrain = new StoryController();
 
 class Mugstory extends StatelessWidget {
   // This widget is the root of your application.
@@ -54,17 +53,22 @@ class StoryPage extends StatefulWidget {
 }
 
 class _StoryPageState extends State<StoryPage> {
+  // ads
   late BannerAd _bannerAd;
   bool _isBannerAdReady = false;
 
   // story
-  final storyCollection = FirebaseFirestore.instance
-      .collection('story')
+  final _storyCollection = FirebaseFirestore.instance
+      .collection(storyCollectionName)
       .withConverter<Story>(
           fromFirestore: (snapshots, _) => Story.fromJson(snapshots.data()!),
           toFirestore: (story, _) => story.toJson());
   late Stream<QuerySnapshot<Story>> _stories;
-  int chosenId = -1;
+  late CollectionReference<Choice> _choiceReference;
+  int _chosenId = -1;
+  int _currentLevel = 1;
+  String _storyContent = "";
+  String _currentParent = "";
 
   @override
   void initState() {
@@ -87,7 +91,7 @@ class _StoryPageState extends State<StoryPage> {
     );
     _bannerAd.load();
 
-    _stories = storyCollection.snapshots();
+    _stories = _storyCollection.snapshots();
   }
 
   @override
@@ -126,22 +130,32 @@ class _StoryPageState extends State<StoryPage> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final data = snapshot.requireData;
-                    if (chosenId > -1) {
-                      return StoryItem(data.docs[chosenId]);
+                    if (_chosenId > -1) {
+                      return buildStoryItem();
                     }
                     return ListView.builder(
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
                       itemCount: data.size,
                       itemBuilder: (ctx, i) {
-                        var currData = data.docs[i].data();
+                        var storyData = data.docs[i].data();
                         return TextButton(
                             onPressed: () {
                               setState(() {
-                                chosenId = i;
+                                _chosenId = i;
+                                _storyContent = storyData.content;
+                                _choiceReference = FirebaseFirestore.instance
+                                    .collection('story')
+                                    .doc(data.docs[_chosenId].id)
+                                    .collection('choices')
+                                    .withConverter<Choice>(
+                                        fromFirestore: (snapshots, _) =>
+                                            Choice.fromJson(snapshots.data()!),
+                                        toFirestore: (choice, _) =>
+                                            choice.toJson());
                               });
                             },
-                            child: Text(currData.title));
+                            child: Text(storyData.title));
                       },
                     );
                   }),
@@ -151,6 +165,33 @@ class _StoryPageState extends State<StoryPage> {
       ),
     );
   }
+
+  Widget buildStoryItem() {
+    var choiceQuery = _choiceReference.where('level', isEqualTo: _currentLevel);
+    if (_currentParent != "")
+      choiceQuery = choiceQuery.where('parents', arrayContains: _currentParent);
+
+    return StoryItem(
+      storyContent: _storyContent,
+      choicesSnapshot: choiceQuery.snapshots(),
+      choiceCallback: onChoiceClicked,
+      restartCallback: restart,
+    );
+  }
+
+  void restart() => setState(() {
+        _currentLevel = 1;
+        _currentParent = "";
+        _storyContent = "";
+        _chosenId = -1;
+      });
+
+  void onChoiceClicked(QueryDocumentSnapshot<Choice> chosenChoice) =>
+      setState(() {
+        _currentParent = chosenChoice.id;
+        _storyContent = chosenChoice.data().content;
+        _currentLevel++;
+      });
 
   @override
   void dispose() {
