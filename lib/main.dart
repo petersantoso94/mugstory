@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -56,6 +57,10 @@ class _StoryPageState extends State<StoryPage> {
   // ads
   late BannerAd _bannerAd;
   bool _isBannerAdReady = false;
+
+  //storage
+  final firebase_storage.Reference storageRef =
+      firebase_storage.FirebaseStorage.instance.ref();
 
   // story
   final _storyCollection = FirebaseFirestore.instance
@@ -133,31 +138,7 @@ class _StoryPageState extends State<StoryPage> {
                     if (_chosenId > -1) {
                       return buildStoryItem();
                     }
-                    return ListView.builder(
-                      scrollDirection: Axis.vertical,
-                      shrinkWrap: true,
-                      itemCount: data.size,
-                      itemBuilder: (ctx, i) {
-                        var storyData = data.docs[i].data();
-                        return TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _chosenId = i;
-                                _storyContent = storyData.content;
-                                _choiceReference = FirebaseFirestore.instance
-                                    .collection('story')
-                                    .doc(data.docs[_chosenId].id)
-                                    .collection('choices')
-                                    .withConverter<Choice>(
-                                        fromFirestore: (snapshots, _) =>
-                                            Choice.fromJson(snapshots.data()!),
-                                        toFirestore: (choice, _) =>
-                                            choice.toJson());
-                              });
-                            },
-                            child: Text(storyData.title));
-                      },
-                    );
+                    return buildImageStory(data);
                   }),
             ],
           ),
@@ -176,6 +157,81 @@ class _StoryPageState extends State<StoryPage> {
       choicesSnapshot: choiceQuery.snapshots(),
       choiceCallback: onChoiceClicked,
       restartCallback: restart,
+    );
+  }
+
+  Widget buildImageStory(QuerySnapshot<Story> data) {
+    return Expanded(
+      child: GridView.count(
+        primary: false,
+        padding: const EdgeInsets.all(10),
+        crossAxisSpacing: 7,
+        mainAxisSpacing: 7,
+        crossAxisCount: 2,
+        children: List.generate(
+          data.size,
+          (i) {
+            var storyData = data.docs[i].data();
+            var imageData = storageRef.child(storyData.image).getDownloadURL();
+            return Stack(children: <Widget>[
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _chosenId = i;
+                    _storyContent = storyData.content;
+                    _choiceReference = FirebaseFirestore.instance
+                        .collection('story')
+                        .doc(data.docs[_chosenId].id)
+                        .collection('choices')
+                        .withConverter<Choice>(
+                            fromFirestore: (snapshots, _) =>
+                                Choice.fromJson(snapshots.data()!),
+                            toFirestore: (choice, _) => choice.toJson());
+                  });
+                },
+                child: FutureBuilder(
+                  future: imageData,
+                  builder:
+                      (BuildContext context, AsyncSnapshot<String> snapshot) {
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+                        return CircularProgressIndicator();
+                      default:
+                        if (snapshot.hasError)
+                          return Text('Error: ${snapshot.error}');
+                        else
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xff7c94b6),
+                              image: DecorationImage(
+                                fit: BoxFit.cover,
+                                colorFilter: ColorFilter.mode(
+                                    Colors.black.withOpacity(0.8),
+                                    BlendMode.dstATop),
+                                image: NetworkImage(
+                                  snapshot.requireData,
+                                ),
+                              ),
+                            ),
+                          );
+                    }
+                  },
+                ),
+              ),
+              Container(
+                alignment: Alignment.bottomCenter,
+                child: Text(
+                  storyData.title,
+                  style: TextStyle(
+                    backgroundColor: Colors.blue.shade900,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ]);
+          },
+        ),
+      ),
     );
   }
 

@@ -9,7 +9,7 @@ class StoryItem extends StatelessWidget {
     required this.choicesSnapshot,
     required this.choiceCallback,
     required this.restartCallback,
-  }) {}
+  });
   final String storyContent;
   final Stream<QuerySnapshot<Choice>> choicesSnapshot;
   final void Function(QueryDocumentSnapshot<Choice> chosenChoice)
