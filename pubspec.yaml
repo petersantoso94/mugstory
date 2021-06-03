@@ -34,11 +34,13 @@ dependencies:
   firebase_auth: ^1.2.0
   firebase_storage: ^8.1.0
   cloud_firestore: ^2.2.0
+  flutter_tindercard: ^0.2.0
+  cached_network_image: ^3.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.8.0
+  flutter_launcher_icons: ^0.9.0
 
 flutter_icons:
   android: "launcher_icon"

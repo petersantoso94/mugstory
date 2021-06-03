@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
+// @dart=2.9
+import 'package:flutter_tindercard/flutter_tindercard.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'ad_helper.dart';
@@ -74,6 +76,7 @@ class _StoryPageState extends State<StoryPage> {
   int _currentLevel = 1;
   String _storyContent = "";
   String _currentParent = "";
+  bool _swipeToRight = false;
 
   @override
   void initState() {
@@ -135,7 +138,7 @@ class _StoryPageState extends State<StoryPage> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     final data = snapshot.requireData;
-                    if (_chosenId > -1) {
+                    if (_chosenId > -1 && _swipeToRight) {
                       return buildStoryItem();
                     }
                     return buildImageStory(data);
@@ -161,76 +164,107 @@ class _StoryPageState extends State<StoryPage> {
   }
 
   Widget buildImageStory(QuerySnapshot<Story> data) {
-    return Expanded(
-      child: GridView.count(
-        primary: false,
-        padding: const EdgeInsets.all(10),
-        crossAxisSpacing: 7,
-        mainAxisSpacing: 7,
-        crossAxisCount: 2,
-        children: List.generate(
-          data.size,
-          (i) {
-            var storyData = data.docs[i].data();
-            var imageData = storageRef.child(storyData.image).getDownloadURL();
-            return Stack(children: <Widget>[
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _chosenId = i;
-                    _storyContent = storyData.content;
-                    _choiceReference = FirebaseFirestore.instance
-                        .collection('story')
-                        .doc(data.docs[_chosenId].id)
-                        .collection('choices')
-                        .withConverter<Choice>(
-                            fromFirestore: (snapshots, _) =>
-                                Choice.fromJson(snapshots.data()!),
-                            toFirestore: (choice, _) => choice.toJson());
-                  });
-                },
-                child: FutureBuilder(
-                  future: imageData,
-                  builder:
-                      (BuildContext context, AsyncSnapshot<String> snapshot) {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                        return CircularProgressIndicator();
-                      default:
-                        if (snapshot.hasError)
-                          return Text('Error: ${snapshot.error}');
-                        else
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xff7c94b6),
-                              image: DecorationImage(
-                                fit: BoxFit.cover,
-                                colorFilter: ColorFilter.mode(
-                                    Colors.black.withOpacity(0.8),
-                                    BlendMode.dstATop),
-                                image: NetworkImage(
-                                  snapshot.requireData,
-                                ),
-                              ),
-                            ),
-                          );
-                    }
-                  },
-                ),
-              ),
-              Container(
-                alignment: Alignment.bottomCenter,
-                child: Text(
-                  storyData.title,
-                  style: TextStyle(
-                    backgroundColor: Colors.blue.shade900,
-                    color: Colors.white,
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: TinderSwapCard(
+        orientation: AmassOrientation.BOTTOM,
+        totalNum: data.size,
+        stackNum: 3,
+        swipeEdge: 4.0,
+        maxWidth: MediaQuery.of(context).size.width * 0.9,
+        maxHeight: MediaQuery.of(context).size.width * 0.9,
+        minWidth: MediaQuery.of(context).size.width * 0.8,
+        minHeight: MediaQuery.of(context).size.width * 0.8,
+        cardBuilder: (context, i) {
+          var storyData = data.docs[i].data();
+          var imageData = storageRef.child(storyData.image).getDownloadURL();
+          return Card(
+            child: Container(
+              height: 300,
+              width: double.infinity,
+              child: Column(
+                children: <Widget>[
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: EdgeInsets.all(2.0),
+                        child: Text(
+                          storyData.title,
+                          softWrap: true,
+                          maxLines: 2,
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  FutureBuilder(
+                      future: imageData,
+                      builder: (
+                        BuildContext context,
+                        AsyncSnapshot<String> snapshot,
+                      ) {
+                        switch (snapshot.connectionState) {
+                          case ConnectionState.waiting:
+                            return Expanded(
+                              flex: 5,
+                              child: Center(
+                                child: Image.asset('images/loading.gif'),
+                              ),
+                            );
+                          default:
+                            if (snapshot.hasError)
+                              return Text('Error: ${snapshot.error}');
+                            else
+                              return Expanded(
+                                flex: 6,
+                                child: FadeInImage.assetNetwork(
+                                  fit: BoxFit.cover,
+                                  image: snapshot.requireData,
+                                  placeholder: 'images/loading.gif',
+                                ),
+                              );
+                        }
+                      }),
+                ],
               ),
-            ]);
-          },
-        ),
+            ),
+          );
+          ;
+        },
+        cardController: CardController(),
+        swipeUpdateCallback: (DragUpdateDetails details, Alignment align) {
+          /// Get swiping card's alignment
+          if (align.x < 0) {
+            //Card is LEFT swiping
+          } else if (align.x > 0) {
+            //Card is RIGHT swiping
+            setState(() {
+              _swipeToRight = true;
+            });
+          }
+        },
+        swipeCompleteCallback: (CardSwipeOrientation orientation, int i) {
+          /// Get orientation & index of swiped card!
+          if (!_swipeToRight) return;
+          var storyData = data.docs[i].data();
+          setState(() {
+            _chosenId = i;
+            _storyContent = storyData.content;
+            _choiceReference = FirebaseFirestore.instance
+                .collection('story')
+                .doc(data.docs[_chosenId].id)
+                .collection('choices')
+                .withConverter<Choice>(
+                    fromFirestore: (snapshots, _) =>
+                        Choice.fromJson(snapshots.data()!),
+                    toFirestore: (choice, _) => choice.toJson());
+          });
+        },
       ),
     );
   }
@@ -240,6 +274,7 @@ class _StoryPageState extends State<StoryPage> {
         _currentParent = "";
         _storyContent = "";
         _chosenId = -1;
+        _swipeToRight = false;
       });
 
   void onChoiceClicked(QueryDocumentSnapshot<Choice> chosenChoice) =>
