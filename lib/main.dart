@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_image/firebase_image.dart';
 import 'package:flutter/material.dart';
 // @dart=2.9
 import 'package:flutter_tindercard/flutter_tindercard.dart';
@@ -33,15 +33,6 @@ class Mugstory extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: StoryPage(),
@@ -59,10 +50,8 @@ class _StoryPageState extends State<StoryPage> {
   // ads
   late BannerAd _bannerAd;
   bool _isBannerAdReady = false;
-
-  //storage
-  final firebase_storage.Reference storageRef =
-      firebase_storage.FirebaseStorage.instance.ref();
+  late RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
 
   // story
   final _storyCollection = FirebaseFirestore.instance
@@ -77,14 +66,20 @@ class _StoryPageState extends State<StoryPage> {
   String _storyContent = "";
   String _currentParent = "";
   bool _swipeToRight = false;
+  bool _restart = false;
 
   @override
   void initState() {
+    _createRewardedAd();
+    _stories = _storyCollection.snapshots();
+  }
+
+  void _createBannerAd() {
     _bannerAd = BannerAd(
       adUnitId: AdHelper.bannerAdUnitId,
       request: AdRequest(),
       size: AdSize.fullBanner,
-      listener: AdListener(
+      listener: BannerAdListener(
         onAdLoaded: (_) {
           setState(() {
             _isBannerAdReady = true;
@@ -94,12 +89,59 @@ class _StoryPageState extends State<StoryPage> {
           print('Failed to load a banner ad: ${err.message}');
           _isBannerAdReady = false;
           ad.dispose();
+          _createBannerAd();
         },
       ),
     );
     _bannerAd.load();
+  }
 
-    _stories = _storyCollection.snapshots();
+  void _createRewardedAd() {
+    RewardedAd.load(
+        adUnitId: AdHelper.rewardedAdUnitId,
+        request: AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            print('$ad loaded.');
+            _rewardedAd = ad;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('RewardedAd failed to load: $error');
+            _rewardedAd = null;
+            _createRewardedAd();
+          },
+        ));
+  }
+
+  void _showRewardedAd() {
+    if (_rewardedAd == null) {
+      print('Warning: attempt to show rewarded before loaded.');
+      return;
+    }
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (RewardedAd ad) =>
+          print('ad onAdShowedFullScreenContent.'),
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        ad.dispose();
+        _createRewardedAd();
+
+        setState(() {
+          _chosenId = -1;
+          _restart = false;
+        });
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        ad.dispose();
+        _createRewardedAd();
+      },
+    );
+
+    _rewardedAd!.show(onUserEarnedReward: (RewardedAd ad, RewardItem reward) {
+      print('$ad with reward $RewardItem(${reward.amount}, ${reward.type}');
+    });
+    _rewardedAd = null;
   }
 
   @override
@@ -137,6 +179,10 @@ class _StoryPageState extends State<StoryPage> {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
+                    if (_restart) {
+                      _showRewardedAd();
+                      return Center(child: Image.asset('images/loading.gif'));
+                    }
                     final data = snapshot.requireData;
                     if (_chosenId > -1 && _swipeToRight) {
                       return buildStoryItem();
@@ -167,6 +213,7 @@ class _StoryPageState extends State<StoryPage> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       child: TinderSwapCard(
+        allowVerticalMovement: false,
         orientation: AmassOrientation.BOTTOM,
         totalNum: data.size,
         stackNum: 3,
@@ -177,7 +224,6 @@ class _StoryPageState extends State<StoryPage> {
         minHeight: MediaQuery.of(context).size.width * 0.8,
         cardBuilder: (context, i) {
           var storyData = data.docs[i].data();
-          var imageData = storageRef.child(storyData.image).getDownloadURL();
           return Card(
             child: Container(
               height: 300,
@@ -202,45 +248,34 @@ class _StoryPageState extends State<StoryPage> {
                       ),
                     ),
                   ),
-                  FutureBuilder(
-                      future: imageData,
-                      builder: (
-                        BuildContext context,
-                        AsyncSnapshot<String> snapshot,
-                      ) {
-                        switch (snapshot.connectionState) {
-                          case ConnectionState.waiting:
-                            return Expanded(
-                              flex: 5,
-                              child: Center(
-                                child: Image.asset('images/loading.gif'),
-                              ),
-                            );
-                          default:
-                            if (snapshot.hasError)
-                              return Text('Error: ${snapshot.error}');
-                            else
-                              return Expanded(
-                                flex: 6,
-                                child: FadeInImage.assetNetwork(
-                                  fit: BoxFit.cover,
-                                  image: snapshot.requireData,
-                                  placeholder: 'images/loading.gif',
-                                ),
-                              );
-                        }
-                      }),
+                  Expanded(
+                    flex: 6,
+                    child: Image(
+                      fit: BoxFit.cover,
+                      image: FirebaseImage(
+                        storyData.image,
+                        shouldCache:
+                            true, // The image should be cached (default: True)
+                        maxSizeBytes:
+                            3000 * 1000, // 3MB max file size (default: 2.5MB)
+                        cacheRefreshStrategy: CacheRefreshStrategy
+                            .NEVER, // Switch off update checking
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           );
-          ;
         },
         cardController: CardController(),
         swipeUpdateCallback: (DragUpdateDetails details, Alignment align) {
           /// Get swiping card's alignment
           if (align.x < 0) {
             //Card is LEFT swiping
+            setState(() {
+              _swipeToRight = false;
+            });
           } else if (align.x > 0) {
             //Card is RIGHT swiping
             setState(() {
@@ -250,20 +285,26 @@ class _StoryPageState extends State<StoryPage> {
         },
         swipeCompleteCallback: (CardSwipeOrientation orientation, int i) {
           /// Get orientation & index of swiped card!
-          if (!_swipeToRight) return;
-          var storyData = data.docs[i].data();
-          setState(() {
-            _chosenId = i;
-            _storyContent = storyData.content;
-            _choiceReference = FirebaseFirestore.instance
-                .collection('story')
-                .doc(data.docs[_chosenId].id)
-                .collection('choices')
-                .withConverter<Choice>(
-                    fromFirestore: (snapshots, _) =>
-                        Choice.fromJson(snapshots.data()!),
-                    toFirestore: (choice, _) => choice.toJson());
-          });
+          if (_swipeToRight) {
+            var storyData = data.docs[i].data();
+            setState(() {
+              _chosenId = i;
+              _storyContent = storyData.content;
+              _choiceReference = FirebaseFirestore.instance
+                  .collection('story')
+                  .doc(data.docs[_chosenId].id)
+                  .collection('choices')
+                  .withConverter<Choice>(
+                      fromFirestore: (snapshots, _) =>
+                          Choice.fromJson(snapshots.data()!),
+                      toFirestore: (choice, _) => choice.toJson());
+            });
+          } else if (data.docs.length - 1 == i) {
+            debugPrint("ENTER: =====================================");
+            setState(() {
+              _restart = true;
+            });
+          }
         },
       ),
     );
@@ -275,6 +316,7 @@ class _StoryPageState extends State<StoryPage> {
         _storyContent = "";
         _chosenId = -1;
         _swipeToRight = false;
+        _restart = true;
       });
 
   void onChoiceClicked(QueryDocumentSnapshot<Choice> chosenChoice) =>
