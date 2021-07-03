@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mugstory/model/choice.dart';
 
+import '../styles.dart';
+
 class StoryItem extends StatelessWidget {
   StoryItem({
     required this.storyContent,
@@ -18,16 +20,27 @@ class StoryItem extends StatelessWidget {
 
   Widget get content {
     return Expanded(
-        flex: 12,
-        child: Center(
-          child: Text(
-            storyContent,
-            style: TextStyle(
-              fontSize: 25.0,
-              color: Colors.white,
+      flex: 12,
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.amber.shade100.withAlpha(50),
+            borderRadius: BorderRadiusDirectional.all(radius),
+            boxShadow: [
+              Styles().getNeonStyle(Colors.amber.shade50),
+            ],
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Text(
+              storyContent,
+              style: Styles().getStoryContentTextStyle(),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget buttonChoice() {
@@ -37,16 +50,20 @@ class StoryItem extends StatelessWidget {
           if (choiceSnapshot.hasData) {
             final data = choiceSnapshot.requireData;
             if (data.docs.isEmpty) {
-              return TextButton(
-                onPressed: () {
-                  restartCallback();
-                },
-                style: ButtonStyle(
-                    backgroundColor:
-                        MaterialStateProperty.all<Color>(Colors.red)),
-                child: Text(
-                  "Restart..",
-                  style: TextStyle(fontSize: 20.0, color: Colors.white),
+              return Padding(
+                padding: EdgeInsetsDirectional.only(top: 5.0),
+                child: TextButton(
+                  onPressed: () {
+                    restartCallback();
+                  },
+                  style: Styles().getStoryButtonStyle(),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(
+                      "Restart..",
+                      style: Styles().getButtonTextStyle(),
+                    ),
+                  ),
                 ),
               );
             }
@@ -55,17 +72,21 @@ class StoryItem extends StatelessWidget {
                 shrinkWrap: true,
                 itemCount: data.size,
                 itemBuilder: (ctx, i) {
-                  return TextButton(
-                    onPressed: () {
-                      var selectedDoc = data.docs[i];
-                      choiceCallback(selectedDoc);
-                    },
-                    style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all<Color>(Colors.red)),
-                    child: Text(
-                      data.docs[i].data().caption,
-                      style: TextStyle(fontSize: 20.0, color: Colors.white),
+                  return Padding(
+                    padding: EdgeInsetsDirectional.only(top: 5.0),
+                    child: TextButton(
+                      onPressed: () {
+                        var selectedDoc = data.docs[i];
+                        choiceCallback(selectedDoc);
+                      },
+                      style: Styles().getStoryButtonStyle(),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Text(
+                          data.docs[i].data().caption,
+                          style: Styles().getButtonTextStyle(),
+                        ),
+                      ),
                     ),
                   );
                 });
@@ -77,9 +98,15 @@ class StoryItem extends StatelessWidget {
 
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[content, buttonChoice()],
+      child: Padding(
+        padding: EdgeInsetsDirectional.only(top: 10.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            content,
+            buttonChoice(),
+          ],
+        ),
       ),
     );
   }

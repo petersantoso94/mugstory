@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 // @dart=2.9
 import 'package:flutter_tindercard/flutter_tindercard.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:mugstory/styles.dart';
 
 import 'ad_helper.dart';
 import 'component/story_item.dart';
@@ -151,7 +152,7 @@ class _StoryPageState extends State<StoryPage> {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("images/background.png"),
+            image: AssetImage("images/dark-background.png"),
             fit: BoxFit.cover,
           ),
         ),
@@ -227,8 +228,14 @@ class _StoryPageState extends State<StoryPage> {
           var storyData = data.docs[i].data();
           return Card(
             child: Container(
-              height: 300,
+              height: 500,
               width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                boxShadow: [
+                  Styles().getNeonStyle(Colors.amber.shade50),
+                ],
+              ),
               child: Column(
                 children: <Widget>[
                   Expanded(
@@ -240,10 +247,11 @@ class _StoryPageState extends State<StoryPage> {
                         child: Text(
                           storyData.title,
                           softWrap: true,
-                          maxLines: 2,
+                          maxLines: 1,
                           style: TextStyle(
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
+                            color: Colors.teal.shade500,
+                            fontSize: 30.0,
+                            fontFamily: 'StoryTelling',
                           ),
                         ),
                       ),
@@ -251,16 +259,19 @@ class _StoryPageState extends State<StoryPage> {
                   ),
                   Expanded(
                     flex: 6,
-                    child: Image(
-                      fit: BoxFit.cover,
-                      image: FirebaseImage(
-                        storyData.image,
-                        shouldCache:
-                            true, // The image should be cached (default: True)
-                        maxSizeBytes:
-                            3000 * 1000, // 3MB max file size (default: 2.5MB)
-                        cacheRefreshStrategy: CacheRefreshStrategy
-                            .NEVER, // Switch off update checking
+                    child: Padding(
+                      padding: EdgeInsets.all(3.0),
+                      child: Image(
+                        fit: BoxFit.cover,
+                        image: FirebaseImage(
+                          storyData.image,
+                          shouldCache:
+                              true, // The image should be cached (default: True)
+                          maxSizeBytes:
+                              3000 * 1000, // 3MB max file size (default: 2.5MB)
+                          cacheRefreshStrategy: CacheRefreshStrategy
+                              .NEVER, // Switch off update checking
+                        ),
                       ),
                     ),
                   ),
