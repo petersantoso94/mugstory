@@ -71,6 +71,7 @@ class _StoryPageState extends State<StoryPage> {
   @override
   void initState() {
     _createRewardedAd();
+    _createBannerAd();
     _stories = _storyCollection.snapshots();
   }
 
