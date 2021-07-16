@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Styles {
   BoxShadow getNeonStyle(Color color) {
@@ -15,18 +16,20 @@ class Styles {
   }
 
   TextStyle getButtonTextStyle() {
-    return TextStyle(
-      fontFamily: 'StoryTelling',
-      fontSize: 30.0,
-      color: Colors.teal.shade500,
+    return GoogleFonts.sail(
+      textStyle: TextStyle(
+        fontSize: 30.0,
+        color: Colors.teal.shade500,
+      ),
     );
   }
 
   TextStyle getStoryContentTextStyle() {
-    return TextStyle(
-      fontFamily: 'StoryTelling',
-      fontSize: 35.0,
-      color: Colors.teal.shade800,
+    return GoogleFonts.sail(
+      textStyle: TextStyle(
+        fontSize: 35.0,
+        color: Colors.teal.shade800,
+      ),
     );
   }
 

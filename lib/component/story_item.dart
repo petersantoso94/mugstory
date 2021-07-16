@@ -26,7 +26,6 @@ class StoryItem extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.amber.shade100.withAlpha(50),
-            borderRadius: BorderRadiusDirectional.all(radius),
             boxShadow: [
               Styles().getNeonStyle(Colors.amber.shade50),
             ],

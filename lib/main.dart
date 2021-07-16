@@ -248,11 +248,7 @@ class _StoryPageState extends State<StoryPage> {
                           storyData.title,
                           softWrap: true,
                           maxLines: 1,
-                          style: TextStyle(
-                            color: Colors.teal.shade500,
-                            fontSize: 30.0,
-                            fontFamily: 'StoryTelling',
-                          ),
+                          style: Styles().getButtonTextStyle(),
                         ),
                       ),
                     ),
