@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tindercard/flutter_tindercard.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mugstory/styles.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'ad_helper.dart';
 import 'component/story_item.dart';
@@ -62,17 +63,23 @@ class _StoryPageState extends State<StoryPage> {
           toFirestore: (story, _) => story.toJson());
   late Stream<QuerySnapshot<Story>> _stories;
   late CollectionReference<Choice> _choiceReference;
+  late TutorialCoachMark tutorialCoachMark;
+  List<TargetFocus> targets = <TargetFocus>[];
+
+  GlobalKey cardContainerKey = GlobalKey();
   int _chosenId = -1;
   int _currentLevel = 1;
   String _storyContent = "";
   String _currentParent = "";
   bool _swipeToRight = false;
   bool _restart = false;
+  bool _isTutorialShowed = false;
 
   @override
   void initState() {
     _createRewardedAd();
     _createBannerAd();
+
     _stories = _storyCollection.snapshots();
   }
 
@@ -146,6 +153,35 @@ class _StoryPageState extends State<StoryPage> {
     _rewardedAd = null;
   }
 
+  void _showTutorial() {
+    _initTargets();
+    if (!_isTutorialShowed) {
+      tutorialCoachMark = TutorialCoachMark(
+        context,
+        targets: targets,
+        colorShadow: Colors.teal.shade200,
+        textSkip: "Skip",
+        paddingFocus: 10,
+        opacityShadow: 0.8,
+        onFinish: () {
+          print("finish");
+        },
+        onClickTarget: (target) {
+          print('onClickTarget: $target');
+        },
+        onSkip: () {
+          print("skip");
+        },
+        onClickOverlay: (target) {
+          print('onClickOverlay: $target');
+        },
+      )..show();
+      setState(() {
+        _isTutorialShowed = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,11 +192,11 @@ class _StoryPageState extends State<StoryPage> {
             fit: BoxFit.cover,
           ),
         ),
-        padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 15.0),
+        padding: EdgeInsets.symmetric(vertical: 25.0, horizontal: 15.0),
         constraints: BoxConstraints.expand(),
         child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               if (_isBannerAdReady)
                 Align(
@@ -189,6 +225,7 @@ class _StoryPageState extends State<StoryPage> {
                     if (_chosenId > -1 && _swipeToRight) {
                       return buildStoryItem();
                     }
+                    Future.delayed(Duration.zero, _showTutorial);
                     return buildImageStory(data);
                   }),
             ],
@@ -213,7 +250,8 @@ class _StoryPageState extends State<StoryPage> {
 
   Widget buildImageStory(QuerySnapshot<Story> data) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+      height: MediaQuery.of(context).size.height * 0.8,
       child: TinderSwapCard(
         allowVerticalMovement: false,
         orientation: AmassOrientation.BOTTOM,
@@ -244,6 +282,7 @@ class _StoryPageState extends State<StoryPage> {
                       alignment: Alignment.center,
                       child: Padding(
                         padding: EdgeInsets.all(2.0),
+                        key: i == 0 ? cardContainerKey : new Key(i.toString()),
                         child: Text(
                           storyData.title,
                           softWrap: true,
@@ -270,6 +309,9 @@ class _StoryPageState extends State<StoryPage> {
                         ),
                       ),
                     ),
+                  ),
+                  SizedBox(
+                    height: 10.0,
                   ),
                 ],
               ),
@@ -314,6 +356,59 @@ class _StoryPageState extends State<StoryPage> {
             });
           }
         },
+      ),
+    );
+  }
+
+  void _initTargets() {
+    RenderBox box =
+        cardContainerKey.currentContext!.findRenderObject() as RenderBox;
+    Offset position = box.localToGlobal(Offset.zero);
+    targets.clear();
+    targets.add(
+      TargetFocus(
+        identify: "Target 0",
+        targetPosition: TargetPosition(
+            box.size, Offset(position.dx, position.dy + box.size.height + 150)),
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 150),
+                      child: Text(
+                        "Story Card",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 20.0),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Text(
+                        "Slide LEFT to skip.",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Text(
+                        "Slide RIGHT to read the story.",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

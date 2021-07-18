@@ -37,6 +37,7 @@ dependencies:
   flutter_tindercard: ^0.2.0
   firebase_image: ^1.0.1
   google_fonts: ^2.1.0
+  tutorial_coach_mark: ^1.0.3
 
 dev_dependencies:
   flutter_test:
