@@ -192,7 +192,7 @@ class _StoryPageState extends State<StoryPage> {
             fit: BoxFit.cover,
           ),
         ),
-        padding: EdgeInsets.symmetric(vertical: 25.0, horizontal: 15.0),
+        padding: EdgeInsets.fromLTRB(15.0, 55.0, 15.0, 10.0),
         constraints: BoxConstraints.expand(),
         child: SafeArea(
           child: Column(
@@ -250,7 +250,7 @@ class _StoryPageState extends State<StoryPage> {
 
   Widget buildImageStory(QuerySnapshot<Story> data) {
     return Container(
-      transform: Matrix4.translationValues(0.0, -50.0, 0.0),
+      transform: Matrix4.translationValues(0.0, -80.0, 0.0),
       height: MediaQuery.of(context).size.height * 0.8,
       child: TinderSwapCard(
         allowVerticalMovement: false,
@@ -259,9 +259,9 @@ class _StoryPageState extends State<StoryPage> {
         stackNum: 3,
         swipeEdge: 4.0,
         maxWidth: MediaQuery.of(context).size.width * 0.9,
-        maxHeight: MediaQuery.of(context).size.width * 0.9,
+        maxHeight: MediaQuery.of(context).size.width * 1.2,
         minWidth: MediaQuery.of(context).size.width * 0.8,
-        minHeight: MediaQuery.of(context).size.width * 0.8,
+        minHeight: MediaQuery.of(context).size.width * 1,
         cardBuilder: (context, i) {
           var storyData = data.docs[i].data();
           return Card(
@@ -368,8 +368,8 @@ class _StoryPageState extends State<StoryPage> {
     targets.add(
       TargetFocus(
         identify: "Target 0",
-        targetPosition: TargetPosition(
-            box.size, Offset(position.dx, position.dy + box.size.height + 150)),
+        targetPosition: TargetPosition(box.size,
+            Offset(position.dx, position.dy + box.size.height + cardPadding)),
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
@@ -380,7 +380,7 @@ class _StoryPageState extends State<StoryPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Padding(
-                      padding: const EdgeInsets.only(top: 150),
+                      padding: const EdgeInsets.only(top: cardPadding),
                       child: Text(
                         "Story Card",
                         style: TextStyle(

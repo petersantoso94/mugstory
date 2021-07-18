@@ -17,6 +17,7 @@ class StoryItem extends StatelessWidget {
   final void Function(QueryDocumentSnapshot<Choice> chosenChoice)
       choiceCallback;
   final void Function() restartCallback;
+  final ScrollController _scrollController = ScrollController();
 
   Widget get content {
     return Expanded(
@@ -31,6 +32,7 @@ class StoryItem extends StatelessWidget {
             ],
           ),
           child: SingleChildScrollView(
+            controller: _scrollController,
             scrollDirection: Axis.vertical,
             child: Text(
               storyContent,
@@ -39,6 +41,14 @@ class StoryItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _scrollContentToTop() {
+    _scrollController.animateTo(
+      _scrollController.position.minScrollExtent,
+      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 10),
     );
   }
 
@@ -76,6 +86,7 @@ class StoryItem extends StatelessWidget {
                     child: TextButton(
                       onPressed: () {
                         var selectedDoc = data.docs[i];
+                        _scrollContentToTop();
                         choiceCallback(selectedDoc);
                       },
                       style: Styles().getStoryButtonStyle(),

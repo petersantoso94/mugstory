@@ -16,7 +16,7 @@ class Styles {
   }
 
   TextStyle getButtonTextStyle() {
-    return GoogleFonts.sail(
+    return GoogleFonts.roboto(
       textStyle: TextStyle(
         fontSize: 30.0,
         color: Colors.teal.shade500,
@@ -25,7 +25,7 @@ class Styles {
   }
 
   TextStyle getStoryContentTextStyle() {
-    return GoogleFonts.sail(
+    return GoogleFonts.roboto(
       textStyle: TextStyle(
         fontSize: 35.0,
         color: Colors.teal.shade800,
