@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tindercard/flutter_tindercard.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mugstory/styles.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'ad_helper.dart';
@@ -16,7 +17,6 @@ import 'model/choice.dart';
 import 'model/story.dart';
 
 Future<InitializationStatus> _initGoogleMobileAds() {
-  // TODO: Initialize Google Mobile Ads SDK
   return MobileAds.instance.initialize();
 }
 
@@ -75,12 +75,21 @@ class _StoryPageState extends State<StoryPage> {
   bool _restart = false;
   bool _isTutorialShowed = false;
 
+  // Shared preference
+  Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
   @override
   void initState() {
     _createRewardedAd();
     _createBannerAd();
 
     _stories = _storyCollection.snapshots();
+    _prefs.then((SharedPreferences prefs) {
+      setState(() {
+        _isTutorialShowed =
+            (prefs.getBool(tutorialSharedPreferenceKey) ?? false);
+      });
+    });
   }
 
   void _createBannerAd() {
@@ -120,6 +129,11 @@ class _StoryPageState extends State<StoryPage> {
             _createRewardedAd();
           },
         ));
+  }
+
+  void _setSharedPreferenceForTutorial() async {
+    final SharedPreferences prefs = await _prefs;
+    prefs.setBool(tutorialSharedPreferenceKey, true);
   }
 
   void _showRewardedAd() {
@@ -169,15 +183,14 @@ class _StoryPageState extends State<StoryPage> {
         onClickTarget: (target) {
           print('onClickTarget: $target');
         },
-        onSkip: () {
-          print("skip");
-        },
+        onSkip: _setSharedPreferenceForTutorial,
         onClickOverlay: (target) {
           print('onClickOverlay: $target');
         },
       )..show();
       setState(() {
         _isTutorialShowed = true;
+        _setSharedPreferenceForTutorial();
       });
     }
   }
@@ -192,7 +205,7 @@ class _StoryPageState extends State<StoryPage> {
             fit: BoxFit.cover,
           ),
         ),
-        padding: EdgeInsets.fromLTRB(15.0, 55.0, 15.0, 10.0),
+        padding: EdgeInsets.fromLTRB(15.0, 45.0, 15.0, 10.0),
         constraints: BoxConstraints.expand(),
         child: SafeArea(
           child: Column(
@@ -431,7 +444,6 @@ class _StoryPageState extends State<StoryPage> {
 
   @override
   void dispose() {
-    // TODO: Dispose a BannerAd object
     _bannerAd.dispose();
 
     super.dispose();
