@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_image/firebase_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 // @dart=2.9
 import 'package:flutter_tindercard/flutter_tindercard.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -82,6 +83,8 @@ class _StoryPageState extends State<StoryPage> {
   void initState() {
     _createRewardedAd();
     _createBannerAd();
+
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
     _stories = _storyCollection.snapshots();
     _prefs.then((SharedPreferences prefs) {
@@ -205,7 +208,6 @@ class _StoryPageState extends State<StoryPage> {
             fit: BoxFit.cover,
           ),
         ),
-        padding: EdgeInsets.fromLTRB(15.0, 45.0, 15.0, 10.0),
         constraints: BoxConstraints.expand(),
         child: SafeArea(
           child: Column(
@@ -219,6 +221,9 @@ class _StoryPageState extends State<StoryPage> {
                     child: AdWidget(ad: _bannerAd),
                   ),
                 ),
+              SizedBox(
+                height: 10.0,
+              ),
               StreamBuilder<QuerySnapshot<Story>>(
                   stream: _stories,
                   builder: (context, snapshot) {
@@ -263,7 +268,6 @@ class _StoryPageState extends State<StoryPage> {
 
   Widget buildImageStory(QuerySnapshot<Story> data) {
     return Container(
-      transform: Matrix4.translationValues(0.0, -80.0, 0.0),
       height: MediaQuery.of(context).size.height * 0.8,
       child: TinderSwapCard(
         allowVerticalMovement: false,
@@ -279,7 +283,7 @@ class _StoryPageState extends State<StoryPage> {
           var storyData = data.docs[i].data();
           return Card(
             child: Container(
-              height: 500,
+              height: cardContainerHeight,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.amber.shade100,
@@ -381,43 +385,49 @@ class _StoryPageState extends State<StoryPage> {
     targets.add(
       TargetFocus(
         identify: "Target 0",
-        targetPosition: TargetPosition(box.size,
-            Offset(position.dx, position.dy + box.size.height + cardPadding)),
+        targetPosition: TargetPosition(
+            box.size,
+            Offset(position.dx,
+                position.dy + box.size.height + (cardContainerHeight / 2.0))),
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
             builder: (context, controller) {
-              return Container(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: cardPadding),
-                      child: Text(
-                        "Story Card",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 20.0),
-                      ),
+              return OrientationBuilder(
+                builder: (context, orientation) {
+                  return Container(
+                    padding: EdgeInsets.only(
+                        top: orientation == Orientation.portrait
+                            ? (cardContainerHeight / 2.0)
+                            : 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          "Story Cards",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 20.0),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Text(
+                            "Slide LEFT to skip.",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Text(
+                            "Slide RIGHT to read the story.",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Text(
-                        "Slide LEFT to skip.",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Text(
-                        "Slide RIGHT to read the story.",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -445,7 +455,12 @@ class _StoryPageState extends State<StoryPage> {
   @override
   void dispose() {
     _bannerAd.dispose();
-
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     super.dispose();
   }
 }

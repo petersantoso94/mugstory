@@ -1,5 +1,5 @@
 const String storyCollectionName = 'story';
-const double cardPadding = 170.0;
 const String tutorialSharedPreferenceKey = 'finishTutorial';
+const double cardContainerHeight = 500;
 
 class Constants {}
