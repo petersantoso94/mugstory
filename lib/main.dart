@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'ad_helper.dart';
+import 'component/shadow_text.dart';
 import 'component/story_item.dart';
 import 'constants.dart';
 import 'model/choice.dart';
@@ -388,7 +389,7 @@ class _StoryPageState extends State<StoryPage> {
         targetPosition: TargetPosition(
             box.size,
             Offset(position.dx,
-                position.dy + box.size.height + (cardContainerHeight / 2.0))),
+                position.dy + (cardContainerHeight / 2.0) - box.size.height)),
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
@@ -396,14 +397,10 @@ class _StoryPageState extends State<StoryPage> {
               return OrientationBuilder(
                 builder: (context, orientation) {
                   return Container(
-                    padding: EdgeInsets.only(
-                        top: orientation == Orientation.portrait
-                            ? (cardContainerHeight / 2.0)
-                            : 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(
+                        new ShadowText(
                           "Story Cards",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -412,14 +409,14 @@ class _StoryPageState extends State<StoryPage> {
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 10.0),
-                          child: Text(
+                          child: new ShadowText(
                             "Slide LEFT to skip.",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 10.0),
-                          child: Text(
+                          child: new ShadowText(
                             "Slide RIGHT to read the story.",
                             style: TextStyle(color: Colors.white),
                           ),

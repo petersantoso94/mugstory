@@ -24,9 +24,10 @@ class StoryItem extends StatelessWidget {
       flex: 12,
       child: Center(
         child: Container(
+          height: double.infinity,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.amber.shade100.withAlpha(50),
+            color: Colors.amber.shade100.withAlpha(90),
             boxShadow: [
               Styles().getNeonStyle(Colors.amber.shade50),
             ],
@@ -109,7 +110,7 @@ class StoryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: EdgeInsetsDirectional.only(top: 10.0),
+        padding: EdgeInsetsDirectional.all(15.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
