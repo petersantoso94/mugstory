@@ -96,6 +96,64 @@ class _StoryPageState extends State<StoryPage> {
     });
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("images/dark-background.png"),
+              fit: BoxFit.cover,
+            ),
+          ),
+          constraints: BoxConstraints.expand(),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (_isBannerAdReady)
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      height: _bannerAd.size.height.toDouble(),
+                      child: AdWidget(ad: _bannerAd),
+                    ),
+                  ),
+                SizedBox(
+                  height: 10.0,
+                ),
+                StreamBuilder<QuerySnapshot<Story>>(
+                    stream: _stories,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(snapshot.error.toString()),
+                        );
+                      }
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (_restart) {
+                        _showRewardedAd();
+                        return Center(child: Image.asset('images/loading.gif'));
+                      }
+                      final data = snapshot.requireData;
+                      if (_chosenId > -1 && _swipeToRight) {
+                        return buildStoryItem();
+                      }
+                      Future.delayed(Duration.zero, _showTutorial);
+                      return buildImageStory(data);
+                    }),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _createBannerAd() {
     _bannerAd = BannerAd(
       adUnitId: AdHelper.bannerAdUnitId,
@@ -199,59 +257,25 @@ class _StoryPageState extends State<StoryPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("images/dark-background.png"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        constraints: BoxConstraints.expand(),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              if (_isBannerAdReady)
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    height: _bannerAd.size.height.toDouble(),
-                    child: AdWidget(ad: _bannerAd),
-                  ),
-                ),
-              SizedBox(
-                height: 10.0,
+  Future<bool> _onWillPop() async {
+    return (await showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: new Text('Are you sure?'),
+            content: new Text('Do you want to exit an App'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: new Text('No'),
               ),
-              StreamBuilder<QuerySnapshot<Story>>(
-                  stream: _stories,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text(snapshot.error.toString()),
-                      );
-                    }
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (_restart) {
-                      _showRewardedAd();
-                      return Center(child: Image.asset('images/loading.gif'));
-                    }
-                    final data = snapshot.requireData;
-                    if (_chosenId > -1 && _swipeToRight) {
-                      return buildStoryItem();
-                    }
-                    Future.delayed(Duration.zero, _showTutorial);
-                    return buildImageStory(data);
-                  }),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: new Text('Yes'),
+              ),
             ],
           ),
-        ),
-      ),
-    );
+        )) ??
+        false;
   }
 
   Widget buildStoryItem() {
