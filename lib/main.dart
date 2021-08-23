@@ -258,24 +258,40 @@ class _StoryPageState extends State<StoryPage> {
   }
 
   Future<bool> _onWillPop() async {
+    String question = isInStorySelection()
+        ? 'Do you want to exit Mugstory?'
+        : 'Do you want to exit current Story?';
     return (await showDialog(
           context: context,
           builder: (context) => new AlertDialog(
             title: new Text('Are you sure?'),
-            content: new Text('Do you want to exit an App'),
+            content: new Text(question),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
                 child: new Text('No'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: onConfirmationButtonClicked,
                 child: new Text('Yes'),
               ),
             ],
           ),
         )) ??
         false;
+  }
+
+  void onConfirmationButtonClicked() {
+    if (isInStorySelection())
+      Navigator.of(context).pop(true);
+    else {
+      Navigator.of(context).pop(false);
+      restart();
+    }
+  }
+
+  bool isInStorySelection() {
+    return _chosenId == -1 && !_swipeToRight;
   }
 
   Widget buildStoryItem() {
