@@ -8,7 +8,7 @@ class Pocket extends StatelessWidget {
   Widget smallButton = Container(
     height: cCardHeight / 9,
     decoration: new BoxDecoration(
-      color: Color(cTangerine),
+      color: Color(cOrange),
       shape: BoxShape.circle,
     ),
   );
@@ -21,7 +21,7 @@ class Pocket extends StatelessWidget {
           top: Radius.circular(0),
           bottom: Radius.circular(cCardRadius),
         ),
-        color: Color(cYellow),
+        color: Color(cTangerine),
       ),
       // child: Column(
       //   mainAxisAlignment: MainAxisAlignment.start,

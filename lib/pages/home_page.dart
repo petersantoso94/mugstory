@@ -1,5 +1,4 @@
 import 'dart:developer' as dev;
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
@@ -19,8 +18,7 @@ class _HomePageState extends State<HomePage> {
   int _index = 0;
   int get index => _index;
   set index(int value) {
-    _index = min(value, 2);
-    _index == 2 ? controller.hide() : controller.show();
+    _index = value;
     setState(() {});
   }
 
@@ -31,8 +29,7 @@ class _HomePageState extends State<HomePage> {
       elevation: 16,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
-      backgroundColor: Colors.white,
-      selectedItemColor: Colors.blue,
+      selectedItemColor: Theme.of(context).primaryColor,
       selectedFontSize: 11.5,
       unselectedFontSize: 11.5,
       unselectedItemColor: const Color(0xFF4d4d4d),
@@ -83,7 +80,7 @@ class _HomePageState extends State<HomePage> {
         FloatingSearchBarAction(
           showIfOpened: false,
           child: CircularButton(
-            icon: const Icon(Icons.place),
+            icon: const Icon(Icons.book),
             onPressed: () {},
           ),
         ),

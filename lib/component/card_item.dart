@@ -30,7 +30,7 @@ class CardItem extends StatelessWidget {
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(cCardRadius),
                     image: DecorationImage(
-                      image: AssetImage('images/light-background.png'),
+                      image: AssetImage('images/spiderman.jpg'),
                       fit: BoxFit.cover,
                     )),
                 child: InkWell(
