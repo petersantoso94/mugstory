@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:mugstory/component/card_item.dart';
 import 'package:mugstory/constants.dart';
 import 'package:responsive_grid/responsive_grid.dart';
+
+import '../ad_helper.dart';
 
 class HomePage extends StatefulWidget {
   HomePage();
@@ -12,6 +15,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // ads
+  late BannerAd _bannerAd;
+  bool _isBannerAdReady = false;
+  late RewardedAd? _rewardedAd;
+
   late SearchBar searchBar;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int _index = 0;
@@ -25,6 +33,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    _createBannerAd();
+
     searchBar = new SearchBar(
         inBar: false,
         buildDefaultAppBar: buildAppBar,
@@ -42,6 +52,28 @@ class _HomePageState extends State<HomePage> {
     return new AppBar(
         title: new Text(cApplicationName),
         actions: [searchBar.getSearchAction(context)]);
+  }
+
+  void _createBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: AdRequest(),
+      size: AdSize.fullBanner,
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          setState(() {
+            _isBannerAdReady = true;
+          });
+        },
+        onAdFailedToLoad: (ad, err) {
+          print('Failed to load a banner ad: ${err.message}');
+          _isBannerAdReady = false;
+          ad.dispose();
+          _createBannerAd();
+        },
+      ),
+    );
+    _bannerAd.load();
   }
 
   void _onStartScroll(ScrollMetrics metrics) {
@@ -97,29 +129,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  PreferredSizeWidget? buildSearchBar() {
-    return showSearchBar ? searchBar.build(context) : null;
-  }
-
   Future<bool> _onWillPop() async {
-    return (await showDialog(
-          context: context,
-          builder: (context) => new AlertDialog(
-            title: new Text('Are you sure?'),
-            content: new Text('Do you want to exit Mugstory?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: new Text('No'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: new Text('Yes'),
-              ),
-            ],
-          ),
-        )) ??
-        false;
+    if (!Navigator.canPop(context))
+      return (await showDialog(
+        context: context,
+        builder: (context) => new AlertDialog(
+          title: new Text('Are you sure?'),
+          content: new Text('Do you want to exit Mugstory?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: new Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: new Text('Yes'),
+            ),
+          ],
+        ),
+      ));
+    else
+      return true;
   }
 
   @override
@@ -128,13 +158,28 @@ class _HomePageState extends State<HomePage> {
       onWillPop: _onWillPop,
       child: Scaffold(
         key: _scaffoldKey,
-        appBar: buildSearchBar(),
         resizeToAvoidBottomInset: false,
         body: Container(
           constraints: BoxConstraints.expand(),
           child: SafeArea(
             child: Column(
               children: [
+                AnimatedContainer(
+                  height: showSearchBar ? 56.0 : 0.0,
+                  duration: Duration(milliseconds: 200),
+                  child: searchBar.build(context),
+                ),
+                if (_isBannerAdReady)
+                  Expanded(
+                    flex: 1,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Container(
+                        height: _bannerAd.size.height.toDouble(),
+                        child: AdWidget(ad: _bannerAd),
+                      ),
+                    ),
+                  ),
                 Expanded(
                   flex: 8,
                   child: NotificationListener<ScrollNotification>(
