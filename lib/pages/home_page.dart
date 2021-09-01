@@ -1,8 +1,6 @@
-import 'dart:developer' as dev;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 import 'package:mugstory/component/card_item.dart';
 import 'package:mugstory/constants.dart';
 import 'package:responsive_grid/responsive_grid.dart';
@@ -14,12 +12,53 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final controller = FloatingSearchBarController();
+  late SearchBar searchBar;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int _index = 0;
   int get index => _index;
   set index(int value) {
     _index = value;
     setState(() {});
+  }
+
+  bool showSearchBar = true;
+
+  @override
+  void initState() {
+    searchBar = new SearchBar(
+        inBar: false,
+        buildDefaultAppBar: buildAppBar,
+        setState: setState,
+        onSubmitted: onSubmitted,
+        onCleared: () {
+          print("cleared");
+        },
+        onClosed: () {
+          print("closed");
+        });
+  }
+
+  AppBar buildAppBar(BuildContext context) {
+    return new AppBar(
+        title: new Text(cApplicationName),
+        actions: [searchBar.getSearchAction(context)]);
+  }
+
+  void _onStartScroll(ScrollMetrics metrics) {
+    setState(() {
+      showSearchBar = false;
+    });
+  }
+
+  void _onEndScroll(ScrollMetrics metrics) {
+    setState(() {
+      showSearchBar = true;
+    });
+  }
+
+  void onSubmitted(String value) {
+    setState(() => _scaffoldKey.currentState!
+        .showSnackBar(new SnackBar(content: new Text('You wrote $value!'))));
   }
 
   Widget buildBottomNavigationBar() {
@@ -58,93 +97,90 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildFloatingSearchBar() {
-    return FloatingSearchBar(
-      hint: 'Search your story',
-      scrollPadding: const EdgeInsets.only(top: 16, bottom: 56),
-      transitionDuration: const Duration(milliseconds: 800),
-      transitionCurve: Curves.easeInOut,
-      physics: const BouncingScrollPhysics(),
-      axisAlignment: 0.0,
-      openAxisAlignment: 0.0,
-      width: 600,
-      debounceDelay: const Duration(milliseconds: 500),
-      onQueryChanged: (query) {
-        // Call your model, bloc, controller here.
-        dev.log('Query: $query');
-      },
-      // Specify a custom transition to be used for
-      // animating between opened and closed stated.
-      transition: CircularFloatingSearchBarTransition(),
-      actions: [
-        FloatingSearchBarAction(
-          showIfOpened: false,
-          child: CircularButton(
-            icon: const Icon(Icons.book),
-            onPressed: () {},
+  PreferredSizeWidget? buildSearchBar() {
+    return showSearchBar ? searchBar.build(context) : null;
+  }
+
+  Future<bool> _onWillPop() async {
+    return (await showDialog(
+          context: context,
+          builder: (context) => new AlertDialog(
+            title: new Text('Are you sure?'),
+            content: new Text('Do you want to exit Mugstory?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: new Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: new Text('Yes'),
+              ),
+            ],
           ),
-        ),
-        FloatingSearchBarAction.searchToClear(
-          showIfClosed: false,
-        ),
-      ],
-      builder: (context, transition) {
-        return Material(
-          color: Colors.white,
-          elevation: 4.0,
-        );
-      },
-    );
+        )) ??
+        false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Container(
-        constraints: BoxConstraints.expand(),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                flex: 1,
-                child: buildFloatingSearchBar(),
-              ),
-              Expanded(
-                flex: 8,
-                child: ResponsiveGridList(
-                    desiredItemWidth: cCardWidth,
-                    minSpacing: cCardSpacing,
-                    children: [
-                      1,
-                      2,
-                      3,
-                      4,
-                      5,
-                      6,
-                      7,
-                      8,
-                      9,
-                      10,
-                      11,
-                      12,
-                      13,
-                      14,
-                      15,
-                      16,
-                      17,
-                      18,
-                      19,
-                      20
-                    ].map((i) {
-                      return CardItem();
-                    }).toList()),
-              ),
-              Expanded(
-                flex: 1,
-                child: buildBottomNavigationBar(),
-              ),
-            ],
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: buildSearchBar(),
+        resizeToAvoidBottomInset: false,
+        body: Container(
+          constraints: BoxConstraints.expand(),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  flex: 8,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (scrollNotification) {
+                      if (scrollNotification is ScrollStartNotification) {
+                        _onStartScroll(scrollNotification.metrics);
+                      } else if (scrollNotification is ScrollEndNotification) {
+                        _onEndScroll(scrollNotification.metrics);
+                      }
+                      return true;
+                    },
+                    child: ResponsiveGridList(
+                        desiredItemWidth: cCardWidth,
+                        minSpacing: cCardSpacing,
+                        children: [
+                          1,
+                          2,
+                          3,
+                          4,
+                          5,
+                          6,
+                          7,
+                          8,
+                          9,
+                          10,
+                          11,
+                          12,
+                          13,
+                          14,
+                          15,
+                          16,
+                          17,
+                          18,
+                          19,
+                          20
+                        ].map((i) {
+                          return CardItem();
+                        }).toList()),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: buildBottomNavigationBar(),
+                ),
+              ],
+            ),
           ),
         ),
       ),

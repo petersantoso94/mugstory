@@ -40,8 +40,9 @@ dependencies:
   tutorial_coach_mark: ^1.0.3
   shared_preferences: ^2.0.6
   responsive_grid: ^2.0.0
-  material_floating_search_bar: ^0.3.4
   material_design_icons_flutter: ^4.0.5955
+  flutter_search_bar: ^2.1.0
+  carousel_slider: ^4.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,6 @@
 const String cStoryCollectionName = 'story';
 const String cTutorialSharedPreferenceKey = 'finishTutorial';
+const String cApplicationName = 'Mugstory';
 
 const double cCardContainerHeight = 500;
 const double cCardHeight = 200;

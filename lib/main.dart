@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mugstory/color_palette.dart';
+import 'package:mugstory/pages/banner_page.dart';
 import 'package:mugstory/pages/home_page.dart';
 import 'package:mugstory/pages/story_page.dart';
 
@@ -25,13 +26,14 @@ class Mugstory extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        brightness: Brightness.light,
+        brightness: Brightness.dark,
         primaryColor: Color(cTangerine),
         accentColor: Color(cYellow),
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => HomePage(),
+        '/': (context) => BannerPage(),
+        '/home': (context) => HomePage(),
         '/story': (context) => StoryPage(),
       },
     );
