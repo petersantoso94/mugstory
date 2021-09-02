@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:mugstory/component/card_item.dart';
 import 'package:mugstory/constants.dart';
+import 'package:mugstory/model/story.dart';
 import 'package:responsive_grid/responsive_grid.dart';
 
 import '../ad_helper.dart';
@@ -31,6 +33,14 @@ class _HomePageState extends State<HomePage> {
 
   bool showSearchBar = true;
 
+  //stories
+  late Stream<QuerySnapshot<Story>> _stories;
+  final _storyCollection = FirebaseFirestore.instance
+      .collection(cStoryCollectionName)
+      .withConverter<Story>(
+          fromFirestore: (snapshots, _) => Story.fromJson(snapshots.data()!),
+          toFirestore: (story, _) => story.toJson());
+
   @override
   void initState() {
     _createBannerAd();
@@ -46,6 +56,8 @@ class _HomePageState extends State<HomePage> {
         onClosed: () {
           print("closed");
         });
+
+    _stories = _storyCollection.snapshots();
   }
 
   AppBar buildAppBar(BuildContext context) {
@@ -152,6 +164,18 @@ class _HomePageState extends State<HomePage> {
       return true;
   }
 
+  Widget buildImageStory(QuerySnapshot<Story> data) {
+    return ResponsiveGridList(
+        desiredItemWidth: cCardWidth,
+        minSpacing: cCardSpacing,
+        children: data.docs.map((i) {
+          var storyData = i.data();
+          return CardItem(
+            storyData: storyData,
+          );
+        }).toList());
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -191,33 +215,22 @@ class _HomePageState extends State<HomePage> {
                       }
                       return true;
                     },
-                    child: ResponsiveGridList(
-                        desiredItemWidth: cCardWidth,
-                        minSpacing: cCardSpacing,
-                        children: [
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7,
-                          8,
-                          9,
-                          10,
-                          11,
-                          12,
-                          13,
-                          14,
-                          15,
-                          16,
-                          17,
-                          18,
-                          19,
-                          20
-                        ].map((i) {
-                          return CardItem();
-                        }).toList()),
+                    child: StreamBuilder<QuerySnapshot<Story>>(
+                      stream: _stories,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text(snapshot.error.toString()),
+                          );
+                        }
+                        if (!snapshot.hasData) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        final data = snapshot.requireData;
+                        return buildImageStory(data);
+                      },
+                    ),
                   ),
                 ),
                 Expanded(
@@ -230,5 +243,11 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _bannerAd.dispose();
+    super.dispose();
   }
 }

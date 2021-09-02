@@ -5,7 +5,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mugstory/color_palette.dart';
 import 'package:mugstory/pages/banner_page.dart';
 import 'package:mugstory/pages/home_page.dart';
-import 'package:mugstory/pages/story_page.dart';
 
 Future<InitializationStatus> _initGoogleMobileAds() {
   return MobileAds.instance.initialize();
@@ -34,7 +33,6 @@ class Mugstory extends StatelessWidget {
       routes: {
         '/': (context) => BannerPage(),
         '/home': (context) => HomePage(),
-        '/story': (context) => StoryPage(),
       },
     );
   }

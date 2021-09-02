@@ -24,8 +24,6 @@ class StoryPage extends StatefulWidget {
 
 class _StoryPageState extends State<StoryPage> {
   // ads
-  late BannerAd _bannerAd;
-  bool _isBannerAdReady = false;
   late RewardedAd? _rewardedAd;
 
   // story
@@ -54,7 +52,6 @@ class _StoryPageState extends State<StoryPage> {
   @override
   void initState() {
     _createRewardedAd();
-    _createBannerAd();
 
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
@@ -84,14 +81,6 @@ class _StoryPageState extends State<StoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                if (_isBannerAdReady)
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                      height: _bannerAd.size.height.toDouble(),
-                      child: AdWidget(ad: _bannerAd),
-                    ),
-                  ),
                 SizedBox(
                   height: 10.0,
                 ),
@@ -123,28 +112,6 @@ class _StoryPageState extends State<StoryPage> {
         ),
       ),
     );
-  }
-
-  void _createBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: AdHelper.bannerAdUnitId,
-      request: AdRequest(),
-      size: AdSize.fullBanner,
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          setState(() {
-            _isBannerAdReady = true;
-          });
-        },
-        onAdFailedToLoad: (ad, err) {
-          print('Failed to load a banner ad: ${err.message}');
-          _isBannerAdReady = false;
-          ad.dispose();
-          _createBannerAd();
-        },
-      ),
-    );
-    _bannerAd.load();
   }
 
   void _createRewardedAd() {
@@ -462,7 +429,6 @@ class _StoryPageState extends State<StoryPage> {
 
   @override
   void dispose() {
-    _bannerAd.dispose();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeRight,
       DeviceOrientation.landscapeLeft,
