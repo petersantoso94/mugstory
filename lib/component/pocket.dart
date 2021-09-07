@@ -5,7 +5,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import '../constants.dart';
 
 class Pocket extends StatelessWidget {
-  Pocket(
+  const Pocket(
       {required this.title,
       required this.isLiked,
       required this.onButtonLikeClicked});
@@ -14,7 +14,7 @@ class Pocket extends StatelessWidget {
   final Function onButtonLikeClicked;
   @override
   Widget build(BuildContext context) {
-    const double pocketHeight = cCardHeight / 4;
+    const double pocketHeight = cCardHeight / 3.5;
     return Container(
         height: pocketHeight,
         decoration: BoxDecoration(
@@ -34,21 +34,26 @@ class Pocket extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.clip,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
             Expanded(
-              child: IconButton(
-                iconSize: pocketHeight / 2,
-                icon: isLiked
-                    ? Icon(
-                        MdiIcons.heart,
-                      )
-                    : Icon(
-                        MdiIcons.heartOutline,
-                      ),
-                onPressed: () {},
+              child: FittedBox(
+                child: IconButton(
+                  color: Colors.white,
+                  icon: isLiked
+                      ? Icon(
+                          MdiIcons.heart,
+                        )
+                      : Icon(
+                          MdiIcons.heartOutline,
+                        ),
+                  onPressed: () {},
+                ),
               ),
               flex: 2,
             )

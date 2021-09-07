@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:mugstory/component/bottom_modal.dart';
 import 'package:mugstory/component/card_item.dart';
 import 'package:mugstory/constants.dart';
 import 'package:mugstory/model/story.dart';
@@ -56,6 +58,8 @@ class _HomePageState extends State<HomePage> {
         onClosed: () {
           print("closed");
         });
+
+    _stories = _storyCollection.snapshots();
   }
 
   AppBar buildAppBar(BuildContext context) {
@@ -101,6 +105,14 @@ class _HomePageState extends State<HomePage> {
   void onSubmitted(String value) {
     setState(() => _scaffoldKey.currentState!
         .showSnackBar(new SnackBar(content: new Text('You wrote $value!'))));
+  }
+
+  void onCardTapped(String id, Story storyData) {
+    showBarModalBottomSheet(
+        expand: true,
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) => BottomModal(storyData: storyData));
   }
 
   Widget buildBottomNavigationBar() {
@@ -169,14 +181,15 @@ class _HomePageState extends State<HomePage> {
         children: data.docs.map((i) {
           var storyData = i.data();
           return CardItem(
+            id: i.id,
             storyData: storyData,
+            onCardTapped: onCardTapped,
           );
         }).toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    _stories = _storyCollection.snapshots();
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -193,14 +206,11 @@ class _HomePageState extends State<HomePage> {
                   child: searchBar.build(context),
                 ),
                 if (_isBannerAdReady)
-                  Expanded(
-                    flex: 1,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Container(
-                        height: _bannerAd.size.height.toDouble(),
-                        child: AdWidget(ad: _bannerAd),
-                      ),
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      height: _bannerAd.size.height.toDouble(),
+                      child: AdWidget(ad: _bannerAd),
                     ),
                   ),
                 Expanded(

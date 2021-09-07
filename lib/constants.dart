@@ -12,4 +12,10 @@ const double cCardElevation = 10;
 const String cSearchBarHint = 'Search your story...';
 const double cSearchBarHeight = 112;
 
+const double cButtonReadNowWidth = 200;
+
+const double cTitleFontMultiplier = 5;
+const double cSubtitleFontMultiplier = 2.5;
+const double cBodyFontMultiplier = 2;
+
 class Constants {}

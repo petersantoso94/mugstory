@@ -9,8 +9,11 @@ import 'package:mugstory/model/story.dart';
 import '../color_palette.dart';
 
 class CardItem extends StatelessWidget {
-  CardItem({required this.storyData});
-  Story storyData;
+  const CardItem(
+      {required this.id, required this.storyData, required this.onCardTapped});
+  final Story storyData;
+  final String id;
+  final void Function(String id, Story storyData) onCardTapped;
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -28,38 +31,31 @@ class CardItem extends StatelessWidget {
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
-            Padding(
-              padding: EdgeInsets.all(10),
-              child: Ink(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(cCardRadius),
-                    image: DecorationImage(
-                      image: FirebaseImage(
-                        storyData.image,
-                        shouldCache:
-                            true, // The image should be cached (default: True)
-                        maxSizeBytes:
-                            3000 * 1000, // 3MB max file size (default: 2.5MB)
-                        cacheRefreshStrategy: CacheRefreshStrategy
-                            .NEVER, // Switch off update checking
-                      ),
-                      fit: BoxFit.cover,
-                    )),
-                child: InkWell(
+            Ink(
+              decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(cCardRadius),
-                  splashColor: Color(cYellow),
-                  onTap: () {
-                    print('Card tapped.');
-                  },
-                ),
+                  image: DecorationImage(
+                    image: FirebaseImage(
+                      storyData.image,
+                      shouldCache:
+                          true, // The image should be cached (default: True)
+                      maxSizeBytes:
+                          3000 * 1000, // 3MB max file size (default: 2.5MB)
+                      cacheRefreshStrategy: CacheRefreshStrategy
+                          .NEVER, // Switch off update checking
+                    ),
+                    fit: BoxFit.cover,
+                  )),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(cCardRadius),
+                splashColor: Color(cYellow),
+                onTap: () => onCardTapped(id, storyData),
               ),
             ),
             Pocket(
               title: storyData.title,
               isLiked: true,
-              onButtonLikeClicked: (){
-
-              },
+              onButtonLikeClicked: () {},
             ),
           ],
         ),
