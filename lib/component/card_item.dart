@@ -54,7 +54,13 @@ class CardItem extends StatelessWidget {
                 ),
               ),
             ),
-            Pocket(),
+            Pocket(
+              title: storyData.title,
+              isLiked: true,
+              onButtonLikeClicked: (){
+
+              },
+            ),
           ],
         ),
       ),

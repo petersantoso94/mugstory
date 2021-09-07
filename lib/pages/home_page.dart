@@ -56,8 +56,6 @@ class _HomePageState extends State<HomePage> {
         onClosed: () {
           print("closed");
         });
-
-    _stories = _storyCollection.snapshots();
   }
 
   AppBar buildAppBar(BuildContext context) {
@@ -178,6 +176,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    _stories = _storyCollection.snapshots();
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
