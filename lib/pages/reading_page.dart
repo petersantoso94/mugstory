@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mugstory/component/banner_ad.dart';
 import 'package:mugstory/model/choice.dart';
@@ -74,6 +75,9 @@ class _ReadingPageState extends State<ReadingPage> {
       choiceQuery = choiceQuery.where('parents', arrayContains: _currentParent);
     return SafeArea(
       child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).bottomAppBarColor,
+        ),
         child: Column(
           children: [
             MBannerAd(),
