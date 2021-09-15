@@ -44,6 +44,7 @@ dependencies:
   flutter_search_bar: ^2.1.0
   carousel_slider: ^4.0.0
   modal_bottom_sheet: ^2.0.0
+  audioplayers: ^0.20.1
 
 dev_dependencies:
   flutter_test:

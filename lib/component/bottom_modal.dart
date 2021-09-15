@@ -9,8 +9,18 @@ import 'package:mugstory/model/story.dart';
 import '../constants.dart';
 
 class BottomModal extends StatelessWidget {
-  BottomModal({Key? key, required this.storyData}) : super(key: key);
-  Story storyData;
+  const BottomModal({
+    Key? key,
+    required this.storyData,
+    required this.onButtonReadNowTapped,
+    required this.id,
+    required this.titleController,
+  }) : super(key: key);
+  final Story storyData;
+  final Function(String id, Story storyData) onButtonReadNowTapped;
+  final String id;
+  final ScrollController titleController;
+
   @override
   Widget build(BuildContext context) {
     var pocketHeight = MediaQuery.of(context).size.height / 2;
@@ -62,7 +72,7 @@ class BottomModal extends StatelessWidget {
                     children: [
                       Expanded(
                         child: SingleChildScrollView(
-                          controller: ScrollController(),
+                          controller: titleController,
                           scrollDirection: Axis.horizontal,
                           child: Text(
                             storyData.title,
@@ -70,9 +80,9 @@ class BottomModal extends StatelessWidget {
                                 .textTheme
                                 .headline1!
                                 .copyWith(
-                                  fontSize:
-                                      cTitleFontMultiplier * unitHeightValue,
-                                ),
+                                    fontSize:
+                                        cTitleFontMultiplier * unitHeightValue,
+                                    fontWeight: FontWeight.bold),
                           ),
                         ),
                         flex: 7,
@@ -183,7 +193,10 @@ class BottomModal extends StatelessWidget {
                                     Theme.of(context).primaryColor,
                                   ),
                                 ),
-                                onPressed: () {},
+                                onPressed: () => onButtonReadNowTapped(
+                                  id,
+                                  storyData,
+                                ),
                                 child: Text(
                                   'Read now',
                                   style: TextStyle(color: Colors.white),

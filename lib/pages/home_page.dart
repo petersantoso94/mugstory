@@ -1,16 +1,18 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:mugstory/component/banner_ad.dart';
 import 'package:mugstory/component/bottom_modal.dart';
 import 'package:mugstory/component/card_item.dart';
 import 'package:mugstory/constants.dart';
 import 'package:mugstory/model/story.dart';
+import 'package:mugstory/pages/reading_page.dart';
 import 'package:responsive_grid/responsive_grid.dart';
-
-import '../ad_helper.dart';
 
 class HomePage extends StatefulWidget {
   HomePage();
@@ -20,8 +22,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // ads
-  late BannerAd _bannerAd;
-  bool _isBannerAdReady = false;
   late RewardedAd? _rewardedAd;
 
   late SearchBar searchBar;
@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   bool showSearchBar = true;
+  final _titleScrollController = ScrollController();
 
   //stories
   late Stream<QuerySnapshot<Story>> _stories;
@@ -45,8 +46,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    _createBannerAd();
-
     searchBar = new SearchBar(
         inBar: false,
         buildDefaultAppBar: buildAppBar,
@@ -60,34 +59,14 @@ class _HomePageState extends State<HomePage> {
         });
 
     _stories = _storyCollection.snapshots();
+
+    super.initState();
   }
 
   AppBar buildAppBar(BuildContext context) {
     return new AppBar(
         title: new Text(cApplicationName),
         actions: [searchBar.getSearchAction(context)]);
-  }
-
-  void _createBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: AdHelper.bannerAdUnitId,
-      request: AdRequest(),
-      size: AdSize.fullBanner,
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          setState(() {
-            _isBannerAdReady = true;
-          });
-        },
-        onAdFailedToLoad: (ad, err) {
-          print('Failed to load a banner ad: ${err.message}');
-          _isBannerAdReady = false;
-          ad.dispose();
-          _createBannerAd();
-        },
-      ),
-    );
-    _bannerAd.load();
   }
 
   void _onStartScroll(ScrollMetrics metrics) {
@@ -107,12 +86,28 @@ class _HomePageState extends State<HomePage> {
         .showSnackBar(new SnackBar(content: new Text('You wrote $value!'))));
   }
 
+  void onButtonReadNowTapped(String id, Story storyData) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => ReadingPage(
+                id: id,
+                storyData: storyData,
+              )),
+    );
+  }
+
   void onCardTapped(String id, Story storyData) {
     showBarModalBottomSheet(
         expand: true,
         context: context,
         backgroundColor: Colors.transparent,
-        builder: (context) => BottomModal(storyData: storyData));
+        builder: (context) => BottomModal(
+              storyData: storyData,
+              onButtonReadNowTapped: onButtonReadNowTapped,
+              id: id,
+              titleController: _titleScrollController,
+            ));
   }
 
   Widget buildBottomNavigationBar() {
@@ -205,14 +200,7 @@ class _HomePageState extends State<HomePage> {
                   duration: Duration(milliseconds: 200),
                   child: searchBar.build(context),
                 ),
-                if (_isBannerAdReady)
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                      height: _bannerAd.size.height.toDouble(),
-                      child: AdWidget(ad: _bannerAd),
-                    ),
-                  ),
+                MBannerAd(),
                 Expanded(
                   flex: 8,
                   child: NotificationListener<ScrollNotification>(
@@ -256,7 +244,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _bannerAd.dispose();
     super.dispose();
   }
 }
