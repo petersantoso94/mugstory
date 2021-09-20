@@ -54,14 +54,17 @@ class _ReadingPageState extends State<ReadingPage> {
 
   Widget buildStoryContent() {
     var unitHeightValue = MediaQuery.of(context).size.height * 0.01;
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Text(
-        _storyContent,
-        style: Theme.of(context)
-            .textTheme
-            .bodyText1!
-            .copyWith(fontSize: cTitleFontMultiplier * unitHeightValue),
+    return Padding(
+      padding: EdgeInsets.all(5),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        child: Text(
+          _storyContent,
+          style: Theme.of(context)
+              .textTheme
+              .bodyText1!
+              .copyWith(fontSize: cStoryFontMultiplier * unitHeightValue),
+        ),
       ),
     );
   }
@@ -132,6 +135,7 @@ class _ReadingPageState extends State<ReadingPage> {
         print('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         _createRewardedAd();
+        _playBackgroundSound();
 
         setState(() {
           _restart = false;
@@ -156,6 +160,7 @@ class _ReadingPageState extends State<ReadingPage> {
     if (_currentParent != "")
       choiceQuery = choiceQuery.where('parents', arrayContains: _currentParent);
     if (_restart) {
+      _audioPlayer.stop();
       _showRewardedAd();
       return Center(child: Image.asset('images/loading.gif'));
     }

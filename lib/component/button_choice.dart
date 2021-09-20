@@ -30,7 +30,7 @@ class MButtonChoice extends StatelessWidget {
               return SizedBox(
                 width: double.infinity,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(5, 5, 5, 0),
+                  padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
                   child: TextButton(
                     onPressed: () {
                       restartCallback();
@@ -41,7 +41,7 @@ class MButtonChoice extends StatelessWidget {
                       child: Text(
                         "Restart",
                         style: Theme.of(context).textTheme.bodyText1!.copyWith(
-                              fontSize: cTitleFontMultiplier * unitHeightValue,
+                              fontSize: cStoryFontMultiplier * unitHeightValue,
                               color: Colors.white,
                             ),
                       ),
@@ -74,7 +74,7 @@ class MButtonChoice extends StatelessWidget {
                                 .bodyText1!
                                 .copyWith(
                                   fontSize:
-                                      cTitleFontMultiplier * unitHeightValue,
+                                      cStoryFontMultiplier * unitHeightValue,
                                   color: Colors.white,
                                 ),
                           ),

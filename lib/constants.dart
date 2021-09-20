@@ -15,6 +15,7 @@ const double cSearchBarHeight = 112;
 const double cButtonReadNowWidth = 200;
 
 const double cTitleFontMultiplier = 5;
+const double cStoryFontMultiplier = 3.5;
 const double cSubtitleFontMultiplier = 2.5;
 const double cBodyFontMultiplier = 2;
 
