@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mugstory/constants.dart';
 
 class Styles {
   BoxShadow getNeonStyle(Color color) {
@@ -33,9 +34,15 @@ class Styles {
     );
   }
 
-  ButtonStyle getStoryButtonStyle() {
+  ButtonStyle getStoryButtonStyle(BuildContext context) {
     return ButtonStyle(
-      backgroundColor: MaterialStateProperty.all<Color>(Colors.amber.shade100),
+      backgroundColor:
+          MaterialStateProperty.all<Color>(Theme.of(context).primaryColor),
+      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(cCardRadius),
+        ),
+      ),
     );
   }
 }

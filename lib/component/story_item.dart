@@ -66,7 +66,6 @@ class StoryItem extends StatelessWidget {
                   onPressed: () {
                     restartCallback();
                   },
-                  style: Styles().getStoryButtonStyle(),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Text(
@@ -90,7 +89,6 @@ class StoryItem extends StatelessWidget {
                         _scrollContentToTop();
                         choiceCallback(selectedDoc);
                       },
-                      style: Styles().getStoryButtonStyle(),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Text(

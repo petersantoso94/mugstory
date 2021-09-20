@@ -5,10 +5,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mugstory/component/banner_ad.dart';
+import 'package:mugstory/component/button_choice.dart';
 import 'package:mugstory/model/choice.dart';
 import 'package:mugstory/model/story.dart';
 
+import '../ad_helper.dart';
 import '../constants.dart';
 
 class ReadingPage extends StatefulWidget {
@@ -22,15 +25,21 @@ class ReadingPage extends StatefulWidget {
 }
 
 class _ReadingPageState extends State<ReadingPage> {
+  late RewardedAd? _rewardedAd;
+
   late CollectionReference<Choice> _choiceReference;
   String _currentParent = "";
   int _currentLevel = 1;
+  String _storyContent = "";
+  bool _restart = false;
+  final ScrollController _scrollController = ScrollController();
 
   // audio
   AudioPlayer _audioPlayer = AudioPlayer();
-  AudioCache _audioCache = AudioCache();
   @override
   void initState() {
+    _createRewardedAd();
+
     _choiceReference = FirebaseFirestore.instance
         .collection('story')
         .doc(widget.id)
@@ -38,6 +47,7 @@ class _ReadingPageState extends State<ReadingPage> {
         .withConverter<Choice>(
             fromFirestore: (snapshots, _) => Choice.fromJson(snapshots.data()!),
             toFirestore: (choice, _) => choice.toJson());
+    _storyContent = widget.storyData.content;
     _playBackgroundSound();
     super.initState();
   }
@@ -45,8 +55,9 @@ class _ReadingPageState extends State<ReadingPage> {
   Widget buildStoryContent() {
     var unitHeightValue = MediaQuery.of(context).size.height * 0.01;
     return SingleChildScrollView(
+      controller: _scrollController,
       child: Text(
-        widget.storyData.content,
+        _storyContent,
         style: Theme.of(context)
             .textTheme
             .bodyText1!
@@ -68,11 +79,86 @@ class _ReadingPageState extends State<ReadingPage> {
     }
   }
 
+  void _scrollContentToTop() {
+    _scrollController.animateTo(
+      _scrollController.position.minScrollExtent,
+      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 10),
+    );
+  }
+
+  void onChoiceClicked(QueryDocumentSnapshot<Choice> chosenChoice) {
+    setState(() {
+      _currentParent = chosenChoice.id;
+      _storyContent = chosenChoice.data().content;
+      _currentLevel++;
+    });
+    _scrollContentToTop();
+  }
+
+  void restart() => setState(() {
+        _currentLevel = 1;
+        _currentParent = "";
+        _storyContent = widget.storyData.content;
+        _restart = true;
+      });
+
+  void _createRewardedAd() {
+    RewardedAd.load(
+        adUnitId: AdHelper.rewardedAdUnitId,
+        request: AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (RewardedAd ad) {
+            print('$ad loaded.');
+            _rewardedAd = ad;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('RewardedAd failed to load: $error');
+            _rewardedAd = null;
+            _createRewardedAd();
+          },
+        ));
+  }
+
+  void _showRewardedAd() {
+    if (_rewardedAd == null) {
+      print('Warning: attempt to show rewarded before loaded.');
+      return;
+    }
+    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (RewardedAd ad) =>
+          print('ad onAdShowedFullScreenContent.'),
+      onAdDismissedFullScreenContent: (RewardedAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        ad.dispose();
+        _createRewardedAd();
+
+        setState(() {
+          _restart = false;
+        });
+      },
+      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        ad.dispose();
+        _createRewardedAd();
+      },
+    );
+
+    _rewardedAd!.show(onUserEarnedReward: (RewardedAd ad, RewardItem reward) {
+      print('$ad with reward $RewardItem(${reward.amount}, ${reward.type}');
+    });
+    _rewardedAd = null;
+  }
+
   @override
   Widget build(BuildContext context) {
     var choiceQuery = _choiceReference.where('level', isEqualTo: _currentLevel);
     if (_currentParent != "")
       choiceQuery = choiceQuery.where('parents', arrayContains: _currentParent);
+    if (_restart) {
+      _showRewardedAd();
+      return Center(child: Image.asset('images/loading.gif'));
+    }
     return SafeArea(
       child: Container(
         decoration: BoxDecoration(
@@ -81,7 +167,18 @@ class _ReadingPageState extends State<ReadingPage> {
         child: Column(
           children: [
             MBannerAd(),
-            buildStoryContent(),
+            Expanded(
+              flex: 8,
+              child: buildStoryContent(),
+            ),
+            Expanded(
+              flex: 2,
+              child: MButtonChoice(
+                choiceCallback: onChoiceClicked,
+                choicesSnapshot: choiceQuery.snapshots(),
+                restartCallback: restart,
+              ),
+            ),
           ],
         ),
       ),
