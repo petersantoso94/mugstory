@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:mugstory/component/banner_ad.dart';
 import 'package:mugstory/component/button_choice.dart';
+import 'package:mugstory/component/choice_card.dart';
 import 'package:mugstory/model/choice.dart';
 import 'package:mugstory/model/story.dart';
 
@@ -90,7 +91,7 @@ class _ReadingPageState extends State<ReadingPage> {
     );
   }
 
-  void onChoiceClicked(QueryDocumentSnapshot<Choice> chosenChoice) {
+  void _onChoiceChosen(QueryDocumentSnapshot<Choice> chosenChoice) {
     setState(() {
       _currentParent = chosenChoice.id;
       _storyContent = chosenChoice.data().content;
@@ -154,11 +155,30 @@ class _ReadingPageState extends State<ReadingPage> {
     _rewardedAd = null;
   }
 
-  @override
-  Widget build(BuildContext context) {
+  void showChoiceImage(QueryDocumentSnapshot<Choice> chosenChoice, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return ChoiceCard(
+          imageUrl: chosenChoice.data().image,
+          isOdd: (index % 2 != 0),
+        );
+      },
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.8),
+    );
+  }
+
+  Query<Choice> _getChoiceReference() {
     var choiceQuery = _choiceReference.where('level', isEqualTo: _currentLevel);
     if (_currentParent != "")
       choiceQuery = choiceQuery.where('parents', arrayContains: _currentParent);
+    return choiceQuery;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var choiceQuery = _getChoiceReference();
     if (_restart) {
       _audioPlayer.stop();
       _showRewardedAd();
@@ -179,7 +199,7 @@ class _ReadingPageState extends State<ReadingPage> {
             Expanded(
               flex: 2,
               child: MButtonChoice(
-                choiceCallback: onChoiceClicked,
+                choiceCallback: showChoiceImage,
                 choicesSnapshot: choiceQuery.snapshots(),
                 restartCallback: restart,
               ),

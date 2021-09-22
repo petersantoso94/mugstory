@@ -14,7 +14,7 @@ class MButtonChoice extends StatelessWidget {
   }) : super(key: key);
 
   final Stream<QuerySnapshot<Choice>> choicesSnapshot;
-  final void Function(QueryDocumentSnapshot<Choice> chosenChoice)
+  final void Function(QueryDocumentSnapshot<Choice> chosenChoice, int index)
       choiceCallback;
   final void Function() restartCallback;
 
@@ -62,7 +62,7 @@ class MButtonChoice extends StatelessWidget {
                       child: TextButton(
                         onPressed: () {
                           var selectedDoc = data.docs[i];
-                          choiceCallback(selectedDoc);
+                          choiceCallback(selectedDoc, i);
                         },
                         style: Styles().getStoryButtonStyle(context),
                         child: SingleChildScrollView(
