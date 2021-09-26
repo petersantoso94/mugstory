@@ -1,6 +1,8 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:mugstory/constants.dart';
 
 class ChoiceCard extends StatelessWidget {
   final String imageUrl;
@@ -14,6 +16,7 @@ class ChoiceCard extends StatelessWidget {
   }
 
   Widget _buildImageWidget(BuildContext context, AsyncSnapshot snapshot) {
+    var unitHeightValue = MediaQuery.of(context).size.height * 0.01;
     return FractionallySizedBox(
       alignment: Alignment.center,
       widthFactor: 1,
@@ -25,12 +28,37 @@ class ChoiceCard extends StatelessWidget {
           children: [
             Align(
               alignment: Alignment.center,
-              child: Container(
-                height: MediaQuery.of(context).size.height * 3 / 4,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: NetworkImage(snapshot.data), fit: BoxFit.cover),
-                ),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(
+                        bottom: (unitHeightValue * cTitleFontMultiplier)),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 3 / 4,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: NetworkImage(snapshot.data),
+                            fit: BoxFit.cover),
+                      ),
+                    ),
+                  ),
+                  Card(
+                    elevation: 0,
+                    semanticContainer: true,
+                    color: Colors.transparent,
+                    child: CircleAvatar(
+                      backgroundColor: Theme.of(context).backgroundColor,
+                      radius: unitHeightValue * cTitleFontMultiplier,
+                      child: IconButton(
+                        iconSize: unitHeightValue * cTitleFontMultiplier,
+                        icon: Icon(MdiIcons.checkBold),
+                        color: Theme.of(context).primaryColor,
+                        onPressed: () {},
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
