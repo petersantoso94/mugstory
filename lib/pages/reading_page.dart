@@ -32,7 +32,9 @@ class _ReadingPageState extends State<ReadingPage> {
   String _currentParent = "";
   int _currentLevel = 1;
   String _storyContent = "";
+  String _storySound = "";
   bool _restart = false;
+  bool _rewardedAdsReady = false;
   final ScrollController _scrollController = ScrollController();
 
   // audio
@@ -49,11 +51,12 @@ class _ReadingPageState extends State<ReadingPage> {
             fromFirestore: (snapshots, _) => Choice.fromJson(snapshots.data()!),
             toFirestore: (choice, _) => choice.toJson());
     _storyContent = widget.storyData.content;
-    _playBackgroundSound();
+    _storySound = widget.storyData.sound;
+    _playBackgroundSound(_storySound);
     super.initState();
   }
 
-  Widget buildStoryContent() {
+  Widget _buildStoryContent() {
     var unitHeightValue = MediaQuery.of(context).size.height * 0.01;
     return Padding(
       padding: EdgeInsets.all(5),
@@ -70,10 +73,10 @@ class _ReadingPageState extends State<ReadingPage> {
     );
   }
 
-  void _playBackgroundSound() async {
+  void _playBackgroundSound(String soundFirebaseUrl) async {
     final FirebaseStorage storage = FirebaseStorage.instance;
     var downloadUrl =
-        await storage.refFromURL(widget.storyData.sound).getDownloadURL();
+        await storage.refFromURL(soundFirebaseUrl).getDownloadURL();
 
     int result = await _audioPlayer.play(downloadUrl);
     _audioPlayer.setReleaseMode(ReleaseMode.LOOP);
@@ -91,19 +94,18 @@ class _ReadingPageState extends State<ReadingPage> {
     );
   }
 
-  void _onChoiceChosen(QueryDocumentSnapshot<Choice> chosenChoice) {
-    setState(() {
-      _currentParent = chosenChoice.id;
-      _storyContent = chosenChoice.data().content;
-      _currentLevel++;
-    });
+  void _onChoiceChosen() {
+    Navigator.of(context, rootNavigator: true).pop();
+    setState(() {});
+    _playBackgroundSound(_storySound);
     _scrollContentToTop();
   }
 
-  void restart() => setState(() {
+  void _restartPage() => setState(() {
         _currentLevel = 1;
         _currentParent = "";
         _storyContent = widget.storyData.content;
+        _storySound = widget.storyData.sound;
         _restart = true;
       });
 
@@ -114,6 +116,9 @@ class _ReadingPageState extends State<ReadingPage> {
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
             print('$ad loaded.');
+            setState(() {
+              _rewardedAdsReady = true;
+            });
             _rewardedAd = ad;
           },
           onAdFailedToLoad: (LoadAdError error) {
@@ -136,7 +141,7 @@ class _ReadingPageState extends State<ReadingPage> {
         print('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         _createRewardedAd();
-        _playBackgroundSound();
+        _playBackgroundSound(_storySound);
 
         setState(() {
           _restart = false;
@@ -155,18 +160,53 @@ class _ReadingPageState extends State<ReadingPage> {
     _rewardedAd = null;
   }
 
-  void showChoiceImage(QueryDocumentSnapshot<Choice> chosenChoice, int index) {
-    showDialog(
+  void _showChoiceImage(QueryDocumentSnapshot<Choice> chosenChoice, int index) {
+    _currentParent = chosenChoice.id;
+    _storyContent = chosenChoice.data().content;
+    if (chosenChoice.data().sound != null) {
+      _storySound = chosenChoice.data().sound!;
+    }
+    _currentLevel++;
+    if (chosenChoice.data().image != null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext ctx) {
+          return ChoiceCard(
+            imageUrl: chosenChoice.data().image!,
+            isOdd: (index % 2 != 0),
+            onConfirmPressed: _onChoiceChosen,
+          );
+        },
+        barrierDismissible: true,
+        barrierColor: Colors.black.withOpacity(0.8),
+      );
+    } else {
+      setState(() {});
+      _playBackgroundSound(_storySound);
+    }
+  }
+
+  Future<bool> _onWillPop() async {
+    return (await showDialog(
       context: context,
-      builder: (BuildContext ctx) {
-        return ChoiceCard(
-          imageUrl: chosenChoice.data().image,
-          isOdd: (index % 2 != 0),
-        );
-      },
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.8),
-    );
+      builder: (context) => new AlertDialog(
+        title: new Text('Are you sure?'),
+        content: new Text('Do you want to exit current story?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: new Text('No'),
+          ),
+          TextButton(
+            onPressed: () {
+              _showRewardedAd();
+              Navigator.of(context).pop(true);
+            },
+            child: new Text('Yes'),
+          ),
+        ],
+      ),
+    ));
   }
 
   Query<Choice> _getChoiceReference() {
@@ -184,27 +224,31 @@ class _ReadingPageState extends State<ReadingPage> {
       _showRewardedAd();
       return Center(child: Image.asset('images/loading.gif'));
     }
-    return SafeArea(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).bottomAppBarColor,
-        ),
-        child: Column(
-          children: [
-            MBannerAd(),
-            Expanded(
-              flex: 8,
-              child: buildStoryContent(),
-            ),
-            Expanded(
-              flex: 2,
-              child: MButtonChoice(
-                choiceCallback: showChoiceImage,
-                choicesSnapshot: choiceQuery.snapshots(),
-                restartCallback: restart,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).bottomAppBarColor,
+          ),
+          child: Column(
+            children: [
+              MBannerAd(),
+              Expanded(
+                flex: 8,
+                child: _buildStoryContent(),
               ),
-            ),
-          ],
+              Expanded(
+                flex: 2,
+                child: MButtonChoice(
+                  choiceCallback: _showChoiceImage,
+                  choicesSnapshot: choiceQuery.snapshots(),
+                  restartCallback: _restartPage,
+                  isRewardedAdReady: _rewardedAdsReady,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -11,12 +11,14 @@ class MButtonChoice extends StatelessWidget {
     required this.choicesSnapshot,
     required this.restartCallback,
     required this.choiceCallback,
+    required this.isRewardedAdReady,
   }) : super(key: key);
 
   final Stream<QuerySnapshot<Choice>> choicesSnapshot;
   final void Function(QueryDocumentSnapshot<Choice> chosenChoice, int index)
       choiceCallback;
   final void Function() restartCallback;
+  final bool isRewardedAdReady;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,9 @@ class MButtonChoice extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
                   child: TextButton(
                     onPressed: () {
-                      restartCallback();
+                      if (isRewardedAdReady) {
+                        restartCallback();
+                      }
                     },
                     style: Styles().getStoryButtonStyle(context),
                     child: SingleChildScrollView(

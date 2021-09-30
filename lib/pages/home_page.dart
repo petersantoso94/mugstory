@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -90,6 +91,7 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(
+          settings: RouteSettings(name: "/read"),
           builder: (context) => ReadingPage(
                 id: id,
                 storyData: storyData,
@@ -147,7 +149,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<bool> _onWillPop() async {
-    if (!Navigator.canPop(context))
+    inspect(ModalRoute.of(context)!.settings.name);
+    if (!Navigator.canPop(context) ||
+        (ModalRoute.of(context) != null &&
+            ModalRoute.of(context)!.settings.name == '/read'))
       return (await showDialog(
         context: context,
         builder: (context) => new AlertDialog(

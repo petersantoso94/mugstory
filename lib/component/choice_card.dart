@@ -7,7 +7,12 @@ import 'package:mugstory/constants.dart';
 class ChoiceCard extends StatelessWidget {
   final String imageUrl;
   final bool isOdd;
-  const ChoiceCard({Key? key, required this.imageUrl, required this.isOdd})
+  final void Function() onConfirmPressed;
+  const ChoiceCard(
+      {Key? key,
+      required this.imageUrl,
+      required this.isOdd,
+      required this.onConfirmPressed})
       : super(key: key);
 
   Future<String> _getImageDownloadUrl() {
@@ -54,7 +59,7 @@ class ChoiceCard extends StatelessWidget {
                         iconSize: unitHeightValue * cTitleFontMultiplier,
                         icon: Icon(MdiIcons.checkBold),
                         color: Theme.of(context).primaryColor,
-                        onPressed: () {},
+                        onPressed: onConfirmPressed,
                       ),
                     ),
                   ),
