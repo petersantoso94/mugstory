@@ -34,6 +34,7 @@ class _ReadingPageState extends State<ReadingPage> {
   String _storyContent = "";
   String _storySound = "";
   bool _restart = false;
+  bool _onExit = false;
   bool _rewardedAdsReady = false;
   final ScrollController _scrollController = ScrollController();
 
@@ -141,7 +142,7 @@ class _ReadingPageState extends State<ReadingPage> {
         print('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         _createRewardedAd();
-        _playBackgroundSound(_storySound);
+        if (!_onExit) _playBackgroundSound(_storySound);
 
         setState(() {
           _restart = false;
@@ -199,6 +200,7 @@ class _ReadingPageState extends State<ReadingPage> {
           ),
           TextButton(
             onPressed: () {
+              _onExit = true;
               _showRewardedAd();
               Navigator.of(context).pop(true);
             },
