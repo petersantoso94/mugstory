@@ -35,6 +35,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   bool showSearchBar = true;
+  String _searchText = "";
   final _titleScrollController = ScrollController();
 
   //stories
@@ -45,6 +46,8 @@ class _HomePageState extends State<HomePage> {
           fromFirestore: (snapshots, _) => Story.fromJson(snapshots.data()!),
           toFirestore: (story, _) => story.toJson());
 
+  final _bottomBar = [cEXPLORE_BAR, cBOOKMARK_BAR];
+
   @override
   void initState() {
     searchBar = new SearchBar(
@@ -52,11 +55,13 @@ class _HomePageState extends State<HomePage> {
         buildDefaultAppBar: buildAppBar,
         setState: setState,
         onSubmitted: onSubmitted,
+        clearOnSubmit: false,
+        closeOnSubmit: false,
         onCleared: () {
-          print("cleared");
+          onSubmitted("");
         },
         onClosed: () {
-          print("closed");
+          onSubmitted("");
         });
 
     _stories = _storyCollection.snapshots();
@@ -83,8 +88,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void onSubmitted(String value) {
-    setState(() => _scaffoldKey.currentState!
-        .showSnackBar(new SnackBar(content: new Text('You wrote $value!'))));
+    _searchText = value;
+    setState(() => {});
   }
 
   void onButtonReadNowTapped(String id, Story storyData) {
@@ -129,10 +134,6 @@ class _HomePageState extends State<HomePage> {
           label: 'Explore',
         ),
         BottomNavigationBarItem(
-          icon: Icon(MdiIcons.homeCityOutline),
-          label: 'Commute',
-        ),
-        BottomNavigationBarItem(
           icon: Icon(MdiIcons.bookmarkOutline),
           label: 'Saved',
         ),
@@ -175,10 +176,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget buildImageStory(QuerySnapshot<Story> data) {
+    var stories = data.docs.where((story) =>
+        story.data().title.toLowerCase().contains(_searchText.toLowerCase()));
     return ResponsiveGridList(
         desiredItemWidth: cCardWidth,
         minSpacing: cCardSpacing,
-        children: data.docs.map((i) {
+        children: stories.map((i) {
           var storyData = i.data();
           return CardItem(
             id: i.id,

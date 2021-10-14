@@ -19,4 +19,8 @@ const double cStoryFontMultiplier = 3.5;
 const double cSubtitleFontMultiplier = 2.5;
 const double cBodyFontMultiplier = 2;
 
+// bottom bar
+const String cEXPLORE_BAR = "explore_bar";
+const String cBOOKMARK_BAR = "bookmark_bar";
+
 class Constants {}

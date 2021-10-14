@@ -14,7 +14,7 @@ class BannerPage extends StatelessWidget {
               child: Center(
                 child: Image.asset(
                   item,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
                 ),
