@@ -46,6 +46,7 @@ dependencies:
   modal_bottom_sheet: ^2.0.0
   audioplayers: ^0.20.1
   animate_do: ^2.0.0
+  fluttertoast: ^8.0.8
 
 dev_dependencies:
   flutter_test:

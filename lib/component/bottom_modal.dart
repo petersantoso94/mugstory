@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_image/firebase_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,23 +6,40 @@ import 'package:mugstory/model/story.dart';
 
 import '../constants.dart';
 
-class BottomModal extends StatelessWidget {
+class BottomModal extends StatefulWidget {
   const BottomModal({
     Key? key,
     required this.storyData,
     required this.onButtonReadNowTapped,
+    required this.onBookmarkTapped,
     required this.id,
+    required this.bookmarked,
     required this.titleController,
   }) : super(key: key);
   final Story storyData;
   final Function(String id, Story storyData) onButtonReadNowTapped;
+  final Function(String id) onBookmarkTapped;
   final String id;
+  final bool bookmarked;
   final ScrollController titleController;
+
+  @override
+  _BottomModalState createState() => _BottomModalState();
+}
+
+class _BottomModalState extends State<BottomModal> {
+  bool _localBookmarked = false;
+
+  @override
+  void initState() {
+    _localBookmarked = widget.bookmarked;
+  }
 
   @override
   Widget build(BuildContext context) {
     var pocketHeight = MediaQuery.of(context).size.height / 2;
     var unitHeightValue = MediaQuery.of(context).size.height * 0.01;
+
     return FractionallySizedBox(
       alignment: Alignment.topCenter,
       widthFactor: 1,
@@ -39,7 +54,7 @@ class BottomModal extends StatelessWidget {
               decoration: BoxDecoration(
                 image: DecorationImage(
                     image: FirebaseImage(
-                      storyData.image,
+                      widget.storyData.image,
                       shouldCache:
                           true, // The image should be cached (default: True)
                       maxSizeBytes:
@@ -72,10 +87,10 @@ class BottomModal extends StatelessWidget {
                     children: [
                       Expanded(
                         child: SingleChildScrollView(
-                          controller: titleController,
+                          controller: widget.titleController,
                           scrollDirection: Axis.horizontal,
                           child: Text(
-                            storyData.title,
+                            widget.storyData.title,
                             style: Theme.of(context)
                                 .textTheme
                                 .headline1!
@@ -137,7 +152,7 @@ class BottomModal extends StatelessWidget {
                     physics: BouncingScrollPhysics(
                         parent: AlwaysScrollableScrollPhysics()),
                     child: Text(
-                      storyData.narration,
+                      widget.storyData.narration,
                       style: Theme.of(context).textTheme.bodyText1!.copyWith(
                             fontSize: cBodyFontMultiplier * unitHeightValue,
                           ),
@@ -162,10 +177,15 @@ class BottomModal extends StatelessWidget {
                                     .backgroundColor
                                     .withAlpha(70),
                                 child: IconButton(
-                                  icon: Icon(MdiIcons.bookmark),
+                                  icon: _localBookmarked
+                                      ? Icon(MdiIcons.bookmark)
+                                      : Icon(MdiIcons.bookmarkOutline),
                                   color: Theme.of(context).primaryColor,
                                   onPressed: () {
-                                    log('bookmarked');
+                                    setState(() {
+                                      _localBookmarked = !_localBookmarked;
+                                    });
+                                    widget.onBookmarkTapped(widget.id);
                                   },
                                 ),
                               ),
@@ -193,9 +213,9 @@ class BottomModal extends StatelessWidget {
                                     Theme.of(context).primaryColor,
                                   ),
                                 ),
-                                onPressed: () => onButtonReadNowTapped(
-                                  id,
-                                  storyData,
+                                onPressed: () => widget.onButtonReadNowTapped(
+                                  widget.id,
+                                  widget.storyData,
                                 ),
                                 child: Text(
                                   'Read now',

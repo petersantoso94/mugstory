@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_search_bar/flutter_search_bar.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -14,6 +15,7 @@ import 'package:mugstory/constants.dart';
 import 'package:mugstory/model/story.dart';
 import 'package:mugstory/pages/reading_page.dart';
 import 'package:responsive_grid/responsive_grid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   HomePage();
@@ -25,17 +27,13 @@ class _HomePageState extends State<HomePage> {
   // ads
   late RewardedAd? _rewardedAd;
 
+  // search bar
   late SearchBar searchBar;
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  int _index = 0;
-  int get index => _index;
-  set index(int value) {
-    _index = value;
-    setState(() {});
-  }
-
   bool showSearchBar = true;
   String _searchText = "";
+
+  // controller
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final _titleScrollController = ScrollController();
 
   //stories
@@ -46,7 +44,21 @@ class _HomePageState extends State<HomePage> {
           fromFirestore: (snapshots, _) => Story.fromJson(snapshots.data()!),
           toFirestore: (story, _) => story.toJson());
 
+  // bottom bar
   final _bottomBar = [cEXPLORE_BAR, cBOOKMARK_BAR];
+  int _index = 0;
+  int get index => _index;
+  set index(int value) {
+    _index = value;
+    setState(() {});
+  }
+
+  // bookmark
+  List<String> _bookmarks = [];
+  bool _isBookmarked = false;
+
+  // Shared preference
+  Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   @override
   void initState() {
@@ -54,18 +66,22 @@ class _HomePageState extends State<HomePage> {
         inBar: false,
         buildDefaultAppBar: buildAppBar,
         setState: setState,
-        onSubmitted: onSubmitted,
+        onSubmitted: _onSubmitted,
         clearOnSubmit: false,
         closeOnSubmit: false,
         onCleared: () {
-          onSubmitted("");
+          _onSubmitted("");
         },
         onClosed: () {
-          onSubmitted("");
+          _onSubmitted("");
         });
 
     _stories = _storyCollection.snapshots();
-
+    _prefs.then((SharedPreferences prefs) {
+      setState(() {
+        _bookmarks = (prefs.getStringList(cBookmarkSharedPreferenceKey) ?? []);
+      });
+    });
     super.initState();
   }
 
@@ -87,12 +103,12 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void onSubmitted(String value) {
+  void _onSubmitted(String value) {
     _searchText = value;
     setState(() => {});
   }
 
-  void onButtonReadNowTapped(String id, Story storyData) {
+  void _onButtonReadNowTapped(String id, Story storyData) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -104,17 +120,46 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void onCardTapped(String id, Story storyData) {
+  void _onCardTapped(String id, Story storyData) {
+    var isBookmarked = _bookmarks.contains(id);
     showBarModalBottomSheet(
-        expand: true,
-        context: context,
-        backgroundColor: Colors.transparent,
-        builder: (context) => BottomModal(
-              storyData: storyData,
-              onButtonReadNowTapped: onButtonReadNowTapped,
-              id: id,
-              titleController: _titleScrollController,
-            ));
+      expand: true,
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => BottomModal(
+        storyData: storyData,
+        onButtonReadNowTapped: _onButtonReadNowTapped,
+        onBookmarkTapped: _addBookmarkOnSharedPreference,
+        bookmarked: isBookmarked,
+        id: id,
+        titleController: _titleScrollController,
+      ),
+    );
+  }
+
+  void _addBookmarkOnSharedPreference(String storyId) async {
+    final SharedPreferences prefs = await _prefs;
+    var isBookmarked = _bookmarks.contains(storyId);
+    if (isBookmarked) {
+      _bookmarks.remove(storyId);
+    } else {
+      _bookmarks.add(storyId);
+    }
+    // remove duplicate
+    _bookmarks = [
+      ...{..._bookmarks}
+    ];
+    setState(() {});
+    prefs.setStringList(cBookmarkSharedPreferenceKey, _bookmarks);
+    Fluttertoast.showToast(
+        msg:
+            isBookmarked ? cSnackBarTextRemovedBookmark : cSnackBarTextBookmark,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0);
   }
 
   Widget buildBottomNavigationBar() {
@@ -175,9 +220,22 @@ class _HomePageState extends State<HomePage> {
       return true;
   }
 
-  Widget buildImageStory(QuerySnapshot<Story> data) {
-    var stories = data.docs.where((story) =>
+  Iterable<QueryDocumentSnapshot<Story>> filterStories(
+      QuerySnapshot<Story> stories) {
+    var filteredStories = stories.docs.where((story) =>
         story.data().title.toLowerCase().contains(_searchText.toLowerCase()));
+    switch (_bottomBar[_index]) {
+      case cBOOKMARK_BAR:
+        // if user choose bookmark bar, filter the stories based on the bookmarked stories
+        filteredStories =
+            filteredStories.where((story) => _bookmarks.contains(story.id));
+        break;
+    }
+    return filteredStories;
+  }
+
+  Widget buildImageStory(QuerySnapshot<Story> data) {
+    var stories = filterStories(data);
     return ResponsiveGridList(
         desiredItemWidth: cCardWidth,
         minSpacing: cCardSpacing,
@@ -186,7 +244,7 @@ class _HomePageState extends State<HomePage> {
           return CardItem(
             id: i.id,
             storyData: storyData,
-            onCardTapped: onCardTapped,
+            onCardTapped: _onCardTapped,
           );
         }).toList());
   }
