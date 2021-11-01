@@ -45,7 +45,12 @@ class _HomePageState extends State<HomePage> {
           toFirestore: (story, _) => story.toJson());
 
   // bottom bar
-  final _bottomBar = [cEXPLORE_BAR, cBOOKMARK_BAR];
+  final _bottomBar = [
+    cEXPLORE_BAR,
+    cBOOKMARK_BAR,
+    cCONTRIBUTE_BAR,
+    cUPDATE_BAR
+  ];
   int _index = 0;
   int get index => _index;
   set index(int value) {
@@ -180,7 +185,7 @@ class _HomePageState extends State<HomePage> {
         ),
         BottomNavigationBarItem(
           icon: Icon(MdiIcons.bookmarkOutline),
-          label: 'Saved',
+          label: 'Bookmarked',
         ),
         BottomNavigationBarItem(
           icon: Icon(MdiIcons.plusCircleOutline),

@@ -23,6 +23,8 @@ const double cBodyFontMultiplier = 2;
 // bottom bar
 const String cEXPLORE_BAR = "explore_bar";
 const String cBOOKMARK_BAR = "bookmark_bar";
+const String cCONTRIBUTE_BAR = "contribute_bar";
+const String cUPDATE_BAR = "update_bar";
 
 // shared preference keys
 const String cTutorialSharedPreferenceKey = 'finishTutorial';
