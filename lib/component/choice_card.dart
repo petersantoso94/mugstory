@@ -78,9 +78,7 @@ class ChoiceCard extends StatelessWidget {
         future: _getImageDownloadUrl(),
         builder: (BuildContext ctx, AsyncSnapshot snapshot) {
           switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return const Center(child: CircularProgressIndicator());
-            default:
+            case ConnectionState.done:
               if (snapshot.hasError)
                 return Center(
                   child: Text(snapshot.error.toString()),
@@ -93,6 +91,8 @@ class ChoiceCard extends StatelessWidget {
                     : ElasticInRight(
                         child: _buildImageWidget(context, snapshot),
                       );
+            default:
+              return const Center(child: CircularProgressIndicator());
           }
         });
   }
